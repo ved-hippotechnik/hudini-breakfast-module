@@ -1,0 +1,215 @@
+package api
+
+import (
+	"net/http"
+	"strconv"
+	"time"
+
+	"hudini-breakfast-module/internal/models"
+	"hudini-breakfast-module/internal/services"
+
+	"github.com/gin-gonic/gin"
+)
+
+type BreakfastHandler struct {
+	breakfastService *services.BreakfastService
+}
+
+func NewBreakfastHandler(breakfastService *services.BreakfastService) *BreakfastHandler {
+	return &BreakfastHandler{
+		breakfastService: breakfastService,
+	}
+}
+
+// GET /api/rooms/breakfast-status
+func (h *BreakfastHandler) GetRoomBreakfastStatus(c *gin.Context) {
+	propertyID := c.Query("property_id")
+	if propertyID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "property_id is required"})
+		return
+	}
+
+	roomStatuses, err := h.breakfastService.GetRoomBreakfastStatus(propertyID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	
+	c.JSON(http.StatusOK, gin.H{"rooms": roomStatuses})
+}
+
+// POST /api/rooms/:room_number/consume
+func (h *BreakfastHandler) MarkBreakfastConsumed(c *gin.Context) {
+	roomNumber := c.Param("room_number")
+	propertyID := c.Query("property_id")
+	
+	if propertyID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "property_id is required"})
+		return
+	}
+
+	// Get staff ID from JWT token (this would come from auth middleware)
+	staffIDInterface, exists := c.Get("staff_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Staff authentication required"})
+		return
+	}
+	
+	staffID, ok := staffIDInterface.(uint)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid staff ID"})
+		return
+	}
+
+	err := h.breakfastService.MarkBreakfastConsumed(propertyID, roomNumber, staffID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	
+	c.JSON(http.StatusOK, gin.H{"message": "Breakfast consumption marked successfully"})
+}
+
+// GET /api/consumption/history
+func (h *BreakfastHandler) GetConsumptionHistory(c *gin.Context) {
+	propertyID := c.Query("property_id")
+	if propertyID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "property_id is required"})
+		return
+	}
+
+	// Parse date range
+	startDateStr := c.DefaultQuery("start_date", time.Now().AddDate(0, 0, -7).Format("2006-01-02"))
+	endDateStr := c.DefaultQuery("end_date", time.Now().Format("2006-01-02"))
+	
+	startDate, err := time.Parse("2006-01-02", startDateStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid start_date format (YYYY-MM-DD)"})
+		return
+	}
+	
+	endDate, err := time.Parse("2006-01-02", endDateStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid end_date format (YYYY-MM-DD)"})
+		return
+	}
+
+	consumptions, err := h.breakfastService.GetConsumptionHistory(propertyID, startDate, endDate)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	
+	c.JSON(http.StatusOK, gin.H{"consumptions": consumptions})
+}
+
+// GET /api/reports/daily
+func (h *BreakfastHandler) GetDailyReport(c *gin.Context) {
+	propertyID := c.Query("property_id")
+	if propertyID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "property_id is required"})
+		return
+	}
+
+	dateStr := c.DefaultQuery("date", time.Now().Format("2006-01-02"))
+	date, err := time.Parse("2006-01-02", dateStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid date format (YYYY-MM-DD)"})
+		return
+	}
+
+	report, err := h.breakfastService.GetDailyReport(propertyID, date)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	
+	c.JSON(http.StatusOK, gin.H{"report": report})
+}
+
+// GET /api/analytics
+func (h *BreakfastHandler) GetAnalytics(c *gin.Context) {
+	propertyID := c.Query("property_id")
+	if propertyID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "property_id is required"})
+		return
+	}
+
+	period := c.DefaultQuery("period", "week")
+	if period != "today" && period != "week" && period != "month" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "period must be one of: today, week, month"})
+		return
+	}
+
+	analytics, err := h.breakfastService.GetAnalyticsData(propertyID, period)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	
+	c.JSON(http.StatusOK, gin.H{"analytics": analytics})
+}
+
+// Guest Management Endpoints
+type GuestHandler struct {
+	db *services.BreakfastService // Could be a separate guest service
+}
+
+func NewGuestHandler(breakfastService *services.BreakfastService) *GuestHandler {
+	return &GuestHandler{
+		db: breakfastService,
+	}
+}
+
+// POST /api/guests
+func (h *GuestHandler) CreateGuest(c *gin.Context) {
+	var guest models.Guest
+	if err := c.ShouldBindJSON(&guest); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	
+	// This would be implemented in a guest service
+	c.JSON(http.StatusCreated, gin.H{"message": "Guest created successfully", "guest": guest})
+}
+
+// GET /api/guests
+func (h *GuestHandler) GetGuests(c *gin.Context) {
+	propertyID := c.Query("property_id")
+	if propertyID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "property_id is required"})
+		return
+	}
+	
+	// This would query guests from database
+	c.JSON(http.StatusOK, gin.H{"guests": []models.Guest{}})
+}
+
+// PUT /api/guests/:id
+func (h *GuestHandler) UpdateGuest(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid guest ID"})
+		return
+	}
+	
+	var guest models.Guest
+	if err := c.ShouldBindJSON(&guest); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	
+	guest.ID = uint(id)
+	
+	// This would update the guest in database
+	c.JSON(http.StatusOK, gin.H{"message": "Guest updated successfully", "guest": guest})
+}
+
+// Health check endpoint
+func HealthCheck(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+		"status":    "healthy",
+		"timestamp": time.Now().Format(time.RFC3339),
+		"service":   "breakfast-module",
+	})
+}

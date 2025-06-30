@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hudini Breakfast Module - Complete Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            color: #333;
+            font-size: 2.5em;
+        }
+        
+        .header .subtitle {
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .auth-section {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #28a745, #20c997);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+        
+        .auth-panel, .dashboard {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .feature-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-color: #667eea;
+        }
+        
+        .feature-card h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .feature-card p {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        
+        .room-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .room-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            border: 2px solid #e9ecef;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .room-card.occupied {
+            border-color: #dc3545;
+            background: #fff5f5;
+        }
+        
+        .room-card.available {
+            border-color: #28a745;
+            background: #f8fff9;
+        }
+        
+        .room-number {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .room-status {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        
+        .status-occupied {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .status-available {
+            background: #28a745;
+            color: white;
+        }
+        
+        .response-area {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9em;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .user-info {
+            background: #e8f5e8;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        
+        .tab-container {
+            margin-top: 30px;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e9ecef;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .table th, .table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .breakfast-status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .consumed {
+            background: #28a745;
+            color: white;
+        }
+        
+        .available {
+            background: #17a2b8;
+            color: white;
+        }
+        
+        .no-package {
+            background: #6c757d;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <div>
+                <h1>🍳 Hudini Breakfast Module</h1>
+                <p class="subtitle">Hotel Breakfast Consumption Tracking System</p>
+            </div>
+            <div class="auth-section">
+                <div id="auth-status">Not logged in</div>
+            </div>
+        </div>
+
+        <!-- Authentication Panel -->
+        <div id="auth-panel" class="auth-panel">
+            <h2>Staff Login</h2>
+            <div id="login-form">
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" placeholder="staff@hotel.com">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" placeholder="Enter password">
+                </div>
+                <button class="btn" onclick="login()">Login</button>
+                <button class="btn btn-secondary" onclick="showRegister()">Register New Staff</button>
+            </div>
+            
+            <div id="register-form" class="hidden">
+                <h3>Register New Staff Member</h3>
+                <div class="form-group">
+                    <label for="reg-email">Email:</label>
+                    <input type="email" id="reg-email" placeholder="staff@hotel.com">
+                </div>
+                <div class="form-group">
+                    <label for="reg-password">Password:</label>
+                    <input type="password" id="reg-password" placeholder="Create password">
+                </div>
+                <div class="form-group">
+                    <label for="reg-first-name">First Name:</label>
+                    <input type="text" id="reg-first-name" placeholder="John">
+                </div>
+                <div class="form-group">
+                    <label for="reg-last-name">Last Name:</label>
+                    <input type="text" id="reg-last-name" placeholder="Doe">
+                </div>
+                <div class="form-group">
+                    <label for="reg-role">Role:</label>
+                    <select id="reg-role" style="width: 100%; padding: 12px; border: 2px solid #e9ecef; border-radius: 8px;">
+                        <option value="staff">Staff</option>
+                        <option value="manager">Manager</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="reg-property-id">Property ID:</label>
+                    <input type="text" id="reg-property-id" placeholder="HOTEL001">
+                </div>
+                <button class="btn" onclick="register()">Register</button>
+                <button class="btn btn-secondary" onclick="showLogin()">Back to Login</button>
+            </div>
+            
+            <div id="auth-response" class="response-area" style="display: none;"></div>
+        </div>
+
+        <!-- Main Dashboard -->
+        <div id="dashboard" class="dashboard hidden">
+            <div id="user-info" class="user-info">
+                <strong>Logged in as:</strong> <span id="current-user"></span> | 
+                <button class="btn btn-danger" onclick="logout()">Logout</button>
+            </div>
+
+            <!-- Stats Overview -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="total-rooms">--</div>
+                    <div class="stat-label">Total Rooms</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="occupied-rooms">--</div>
+                    <div class="stat-label">Occupied Rooms</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="breakfast-packages">--</div>
+                    <div class="stat-label">Breakfast Packages</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="consumed-today">--</div>
+                    <div class="stat-label">Consumed Today</div>
+                </div>
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="tab-container">
+                <div class="tabs">
+                    <button class="tab active" onclick="showTab('rooms')">Room Status</button>
+                    <button class="tab" onclick="showTab('guests')">Guest Management</button>
+                    <button class="tab" onclick="showTab('consumption')">Consumption History</button>
+                    <button class="tab" onclick="showTab('reports')">Reports</button>
+                    <button class="tab" onclick="showTab('analytics')">Analytics</button>
+                </div>
+
+                <!-- Room Status Tab -->
+                <div id="rooms-tab" class="tab-content active">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3>Room Breakfast Status</h3>
+                        <button class="btn" onclick="loadRoomStatus()">Refresh</button>
+                    </div>
+                    <div id="room-grid" class="room-grid">
+                        <!-- Room cards will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Guest Management Tab -->
+                <div id="guests-tab" class="tab-content">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3>Guest Management</h3>
+                        <button class="btn" onclick="loadGuests()">Refresh Guests</button>
+                    </div>
+                    <div id="guests-content">
+                        <!-- Guest list will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Consumption History Tab -->
+                <div id="consumption-tab" class="tab-content">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3>Consumption History</h3>
+                        <button class="btn" onclick="loadConsumptionHistory()">Load History</button>
+                    </div>
+                    <div id="consumption-content">
+                        <!-- Consumption history will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Reports Tab -->
+                <div id="reports-tab" class="tab-content">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3>Daily Reports</h3>
+                        <button class="btn" onclick="loadDailyReport()">Generate Report</button>
+                    </div>
+                    <div id="reports-content">
+                        <!-- Reports will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Analytics Tab -->
+                <div id="analytics-tab" class="tab-content">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3>Analytics Dashboard</h3>
+                        <button class="btn" onclick="loadAnalytics()">Load Analytics</button>
+                    </div>
+                    <div id="analytics-content">
+                        <!-- Analytics will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3001';
+        let authToken = localStorage.getItem('authToken');
+        let currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            if (authToken && currentUser) {
+                showDashboard();
+            }
+        });
+
+        // Authentication Functions
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const responseDiv = document.getElementById('auth-response');
+            
+            if (!email || !password) {
+                showAlert('Please enter both email and password', 'error');
+                return;
+            }
+
+            try {
+                responseDiv.style.display = 'block';
+                responseDiv.innerHTML = 'Logging in...';
+
+                const response = await fetch(`${API_BASE}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    authToken = data.token;
+                    currentUser = data.staff;
+                    localStorage.setItem('authToken', authToken);
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    
+                    responseDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            Login successful! Welcome ${currentUser.first_name}
+                        </div>
+                    `;
+                    
+                    setTimeout(() => {
+                        showDashboard();
+                    }, 1000);
+                } else {
+                    responseDiv.innerHTML = `
+                        <div class="alert alert-error">
+                            Login failed: ${data.error || 'Invalid credentials'}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                responseDiv.innerHTML = `
+                    <div class="alert alert-error">
+                        Error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        async function register() {
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+            const firstName = document.getElementById('reg-first-name').value;
+            const lastName = document.getElementById('reg-last-name').value;
+            const role = document.getElementById('reg-role').value;
+            const propertyId = document.getElementById('reg-property-id').value;
+            const responseDiv = document.getElementById('auth-response');
+
+            if (!email || !password || !firstName || !lastName || !propertyId) {
+                showAlert('Please fill all required fields', 'error');
+                return;
+            }
+
+            try {
+                responseDiv.style.display = 'block';
+                responseDiv.innerHTML = 'Registering...';
+
+                const response = await fetch(`${API_BASE}/api/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email,
+                        password,
+                        first_name: firstName,
+                        last_name: lastName,
+                        role,
+                        property_id: propertyId
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    responseDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            Registration successful! You can now login.
+                        </div>
+                    `;
+                    setTimeout(() => {
+                        showLogin();
+                    }, 2000);
+                } else {
+                    responseDiv.innerHTML = `
+                        <div class="alert alert-error">
+                            Registration failed: ${data.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                responseDiv.innerHTML = `
+                    <div class="alert alert-error">
+                        Error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function showRegister() {
+            document.getElementById('login-form').classList.add('hidden');
+            document.getElementById('register-form').classList.remove('hidden');
+        }
+
+        function showLogin() {
+            document.getElementById('register-form').classList.add('hidden');
+            document.getElementById('login-form').classList.remove('hidden');
+        }
+
+        function logout() {
+            authToken = null;
+            currentUser = null;
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('currentUser');
+            
+            document.getElementById('dashboard').classList.add('hidden');
+            document.getElementById('auth-panel').classList.remove('hidden');
+            document.getElementById('auth-status').textContent = 'Not logged in';
+        }
+
+        function showDashboard() {
+            document.getElementById('auth-panel').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+            document.getElementById('current-user').textContent = `${currentUser.first_name} ${currentUser.last_name} (${currentUser.role})`;
+            document.getElementById('auth-status').innerHTML = `
+                <span style="color: #28a745;">✓ Logged in as ${currentUser.first_name}</span>
+            `;
+            
+            // Load initial data
+            loadRoomStatus();
+        }
+
+        // API Helper Function
+        async function apiCall(endpoint, options = {}) {
+            const config = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
+                },
+                ...options
+            };
+
+            const response = await fetch(`${API_BASE}${endpoint}`, config);
+            
+            if (response.status === 401) {
+                logout();
+                throw new Error('Authentication required. Please login again.');
+            }
+            
+            return response;
+        }
+
+        // Tab Management
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Room Status Functions
+        async function loadRoomStatus() {
+            try {
+                const response = await apiCall('/api/rooms/breakfast-status');
+                const data = await response.json();
+
+                if (response.ok) {
+                    updateStats(data);
+                    displayRooms(data.rooms || []);
+                } else {
+                    document.getElementById('room-grid').innerHTML = `
+                        <div class="alert alert-error">
+                            Failed to load room status: ${data.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('room-grid').innerHTML = `
+                    <div class="alert alert-error">
+                        Error loading rooms: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function updateStats(data) {
+            document.getElementById('total-rooms').textContent = data.total_rooms || 0;
+            document.getElementById('occupied-rooms').textContent = data.occupied_rooms || 0;
+            document.getElementById('breakfast-packages').textContent = data.rooms_with_breakfast || 0;
+            document.getElementById('consumed-today').textContent = data.consumed_today || 0;
+        }
+
+        function displayRooms(rooms) {
+            const roomGrid = document.getElementById('room-grid');
+            
+            if (rooms.length === 0) {
+                roomGrid.innerHTML = '<p>No room data available. This could be because:</p><ul><li>No rooms are configured in the database</li><li>The database is empty</li><li>Property ID mismatch</li></ul>';
+                return;
+            }
+
+            roomGrid.innerHTML = rooms.map(room => `
+                <div class="room-card ${room.status}">
+                    <div class="room-number">${room.room_number}</div>
+                    <div class="room-status status-${room.status}">${room.status.toUpperCase()}</div>
+                    ${room.has_guest ? `
+                        <div><strong>${room.guest_name}</strong></div>
+                        <div class="breakfast-status ${room.breakfast_package ? (room.consumed_today ? 'consumed' : 'available') : 'no-package'}">
+                            ${room.breakfast_package ? (room.consumed_today ? 'Consumed' : 'Available') : 'No Package'}
+                        </div>
+                        ${room.breakfast_package && !room.consumed_today ? `
+                            <button class="btn" style="margin-top: 10px; font-size: 12px; padding: 8px 12px;" 
+                                    onclick="markConsumed('${room.room_number}')">Mark Consumed</button>
+                        ` : ''}
+                    ` : '<div>Vacant</div>'}
+                </div>
+            `).join('');
+        }
+
+        async function markConsumed(roomNumber) {
+            try {
+                const response = await apiCall(`/api/rooms/${roomNumber}/consume`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        room_number: roomNumber,
+                        property_id: currentUser.property_id,
+                        notes: 'Marked via web interface',
+                        payment_method: 'room_charge'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAlert('Breakfast consumption marked successfully!', 'success');
+                    loadRoomStatus(); // Refresh the room status
+                } else {
+                    showAlert(`Failed to mark consumption: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                showAlert(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Guest Management Functions
+        async function loadGuests() {
+            try {
+                const response = await apiCall('/api/guests');
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayGuests(data);
+                } else {
+                    document.getElementById('guests-content').innerHTML = `
+                        <div class="alert alert-error">
+                            Failed to load guests: ${data.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('guests-content').innerHTML = `
+                    <div class="alert alert-error">
+                        Error loading guests: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function displayGuests(guests) {
+            const content = document.getElementById('guests-content');
+            
+            if (guests.length === 0) {
+                content.innerHTML = '<p>No guests found in the system.</p>';
+                return;
+            }
+
+            content.innerHTML = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Room</th>
+                            <th>Guest Name</th>
+                            <th>Check-in</th>
+                            <th>Check-out</th>
+                            <th>Breakfast Package</th>
+                            <th>Breakfast Count</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${guests.map(guest => `
+                            <tr>
+                                <td>${guest.room_number}</td>
+                                <td>${guest.first_name} ${guest.last_name}</td>
+                                <td>${new Date(guest.check_in_date).toLocaleDateString()}</td>
+                                <td>${new Date(guest.check_out_date).toLocaleDateString()}</td>
+                                <td>${guest.breakfast_package ? 'Yes' : 'No'}</td>
+                                <td>${guest.breakfast_count}</td>
+                                <td>${guest.is_active ? 'Active' : 'Inactive'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // Consumption History Functions
+        async function loadConsumptionHistory() {
+            try {
+                const response = await apiCall('/api/consumption/history');
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayConsumptionHistory(data);
+                } else {
+                    document.getElementById('consumption-content').innerHTML = `
+                        <div class="alert alert-error">
+                            Failed to load consumption history: ${data.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('consumption-content').innerHTML = `
+                    <div class="alert alert-error">
+                        Error loading consumption history: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function displayConsumptionHistory(history) {
+            const content = document.getElementById('consumption-content');
+            
+            if (history.length === 0) {
+                content.innerHTML = '<p>No consumption history available.</p>';
+                return;
+            }
+
+            content.innerHTML = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Room</th>
+                            <th>Guest</th>
+                            <th>Consumed At</th>
+                            <th>Payment Method</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${history.map(item => `
+                            <tr>
+                                <td>${new Date(item.consumption_date).toLocaleDateString()}</td>
+                                <td>${item.room_number}</td>
+                                <td>${item.guest_name || 'N/A'}</td>
+                                <td>${item.consumed_at ? new Date(item.consumed_at).toLocaleTimeString() : 'N/A'}</td>
+                                <td>${item.payment_method}</td>
+                                <td>$${item.amount}</td>
+                                <td>${item.status}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // Reports Functions
+        async function loadDailyReport() {
+            try {
+                const response = await apiCall('/api/reports/daily');
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayDailyReport(data);
+                } else {
+                    document.getElementById('reports-content').innerHTML = `
+                        <div class="alert alert-error">
+                            Failed to load daily report: ${data.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('reports-content').innerHTML = `
+                    <div class="alert alert-error">
+                        Error loading daily report: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function displayDailyReport(report) {
+            const content = document.getElementById('reports-content');
+            content.innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">${report.total_breakfasts || 0}</div>
+                        <div class="stat-label">Total Breakfasts</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${report.consumed_breakfasts || 0}</div>
+                        <div class="stat-label">Consumed</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${report.consumption_rate || 0}%</div>
+                        <div class="stat-label">Consumption Rate</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">$${report.revenue || 0}</div>
+                        <div class="stat-label">Revenue</div>
+                    </div>
+                </div>
+                <p><strong>Report Date:</strong> ${new Date().toLocaleDateString()}</p>
+            `;
+        }
+
+        // Analytics Functions
+        async function loadAnalytics() {
+            try {
+                const response = await apiCall('/api/analytics');
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayAnalytics(data);
+                } else {
+                    document.getElementById('analytics-content').innerHTML = `
+                        <div class="alert alert-error">
+                            Failed to load analytics: ${data.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('analytics-content').innerHTML = `
+                    <div class="alert alert-error">
+                        Error loading analytics: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function displayAnalytics(analytics) {
+            const content = document.getElementById('analytics-content');
+            content.innerHTML = `
+                <h4>Analytics Dashboard</h4>
+                <p>Detailed analytics and trends will be displayed here.</p>
+                <pre>${JSON.stringify(analytics, null, 2)}</pre>
+            `;
+        }
+
+        // Utility Functions
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            
+            document.body.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                document.body.removeChild(alertDiv);
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
