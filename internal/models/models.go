@@ -186,6 +186,20 @@ type RoomBreakfastStatus struct {
 	SpecialRequests  string    `json:"special_requests"`
 }
 
+// UserDevice represents a user's device for push notifications
+type UserDevice struct {
+	ID           uint      `json:"id" gorm:"primaryKey"`
+	UserID       uint      `json:"user_id" gorm:"not null"`
+	DeviceID     string    `json:"device_id" gorm:"uniqueIndex;not null"`
+	DeviceType   string    `json:"device_type"` // ios, android, web
+	DeviceName   string    `json:"device_name"`
+	PushToken    string    `json:"push_token"`
+	PushEnabled  bool      `json:"push_enabled" gorm:"default:true"`
+	LastActiveAt time.Time `json:"last_active_at"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+}
+
 // AuditLog represents system audit logs for compliance and security
 type AuditLog struct {
 	ID         uint      `json:"id" gorm:"primaryKey"`

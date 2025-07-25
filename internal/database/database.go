@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"hudini-breakfast-module/internal/models"
+	"hudini-breakfast-module/internal/services"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
@@ -85,6 +86,9 @@ func InitializeWithConfig(databaseURL string, config DatabaseConfig) (*gorm.DB, 
 		&models.Outlet{},
 		&models.StaffComment{},
 		&models.AuditLog{},
+		&models.UserDevice{},
+		&services.Notification{},
+		&services.NotificationPreference{},
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to migrate database schema: %w", err)

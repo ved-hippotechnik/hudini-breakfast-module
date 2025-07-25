@@ -100,12 +100,23 @@ func main() {
 	// Initialize audit service
 	auditService := services.NewAuditService(db)
 	logging.Info("Audit service initialized")
+	
+	// Initialize notification service
+	notificationService := services.NewNotificationService(db, redisCache)
+	
+	// Set up notification providers (using mock for now)
+	pushProvider := services.NewMockPushProvider()
+	emailProvider := services.NewMockEmailProvider()
+	smsProvider := services.NewMockSMSProvider()
+	notificationService.SetProviders(pushProvider, emailProvider, smsProvider)
+	notificationService.SetWebSocketHub(wsHub)
+	logging.Info("Notification service initialized")
 
 	// Setup router
 	router := gin.Default()
 
 	// Setup API routes
-	api.SetupRoutes(router, breakfastService, guestService, auditService, db, cfg.JWTSecret, wsHub)
+	api.SetupRoutes(router, breakfastService, guestService, auditService, notificationService, db, cfg.JWTSecret, wsHub)
 	logging.Info("API routes configured")
 
 	// Start server

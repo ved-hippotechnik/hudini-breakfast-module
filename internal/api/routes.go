@@ -14,7 +14,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func SetupRoutes(router *gin.Engine, breakfastService *services.BreakfastService, guestService *services.GuestService, auditService *services.AuditService, db *gorm.DB, jwtSecret string, wsHub *websocket.Hub) {
+func SetupRoutes(router *gin.Engine, breakfastService *services.BreakfastService, guestService *services.GuestService, auditService *services.AuditService, notificationService *services.NotificationService, db *gorm.DB, jwtSecret string, wsHub *websocket.Hub) {
 	// CORS middleware with security improvements
 	config := cors.DefaultConfig()
 
@@ -41,6 +41,7 @@ func SetupRoutes(router *gin.Engine, breakfastService *services.BreakfastService
 	guestHandler := NewGuestHandler(guestService)
 	auditHandler := NewAuditHandler(auditService)
 	executiveHandler := NewExecutiveHandler(breakfastService, guestService)
+	notificationHandler := NewNotificationHandler(notificationService)
 
 	// Public routes
 	api := router.Group("/api")
@@ -157,6 +158,30 @@ func SetupRoutes(router *gin.Engine, breakfastService *services.BreakfastService
 			executive.GET("/guest-preferences", executiveHandler.GetGuestPreferences)
 			executive.GET("/upset-guests", executiveHandler.GetUpsetVIPGuests)
 			executive.GET("/alerts", executiveHandler.GetExecutiveAlerts)
+		}
+		
+		// Notification routes
+		notifications := protected.Group("/notifications")
+		{
+			// Device management
+			notifications.POST("/devices", notificationHandler.RegisterDevice)
+			notifications.PUT("/devices/:device_id/token", notificationHandler.UpdateDeviceToken)
+			
+			// Notifications
+			notifications.GET("", notificationHandler.GetNotifications)
+			notifications.PUT("/:id/read", notificationHandler.MarkNotificationRead)
+			notifications.PUT("/read-all", notificationHandler.MarkAllNotificationsRead)
+			
+			// Preferences
+			notifications.GET("/preferences", notificationHandler.GetNotificationPreferences)
+			notifications.PUT("/preferences", notificationHandler.UpdateNotificationPreferences)
+		}
+		
+		// Admin notification routes
+		adminNotif := admin.Group("/notifications")
+		{
+			adminNotif.POST("/test", notificationHandler.SendTestNotification)
+			adminNotif.GET("/stats", notificationHandler.GetNotificationStats)
 		}
 	}
 

@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Push Notifications Demo - Hudini Breakfast Module</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 30px;
+            text-align: center;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+
+        .section {
+            padding: 30px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .section:last-child {
+            border-bottom: none;
+        }
+
+        .section h2 {
+            font-size: 22px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn.secondary {
+            background: #6c757d;
+        }
+
+        .btn.success {
+            background: #28a745;
+        }
+
+        .btn.warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .btn.danger {
+            background: #dc3545;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .notification-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .notification-item h4 {
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .notification-item p {
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .notification-item .meta {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            font-size: 24px;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-card p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔔 Push Notifications Demo</h1>
+            <p>Test and manage push notifications for the Hudini Breakfast Module</p>
+        </div>
+
+        <!-- Permission Status -->
+        <div class="section">
+            <h2>Notification Permission Status</h2>
+            <div id="permissionStatus" class="status info">
+                Checking notification permission...
+            </div>
+            <button id="enableNotifications" class="btn" style="display: none;">
+                Enable Notifications
+            </button>
+        </div>
+
+        <!-- Device Registration -->
+        <div class="section">
+            <h2>Device Registration</h2>
+            <div class="form-group">
+                <label for="deviceName">Device Name</label>
+                <input type="text" id="deviceName" placeholder="My iPhone" value="">
+            </div>
+            <div class="form-group">
+                <label for="deviceType">Device Type</label>
+                <select id="deviceType">
+                    <option value="web">Web Browser</option>
+                    <option value="ios">iOS</option>
+                    <option value="android">Android</option>
+                </select>
+            </div>
+            <button id="registerDevice" class="btn">Register Device</button>
+            <div id="registrationStatus"></div>
+        </div>
+
+        <!-- Send Test Notification -->
+        <div class="section">
+            <h2>Send Test Notification</h2>
+            <div class="form-group">
+                <label for="notificationTitle">Title</label>
+                <input type="text" id="notificationTitle" placeholder="VIP Guest Arrival" value="Test Notification">
+            </div>
+            <div class="form-group">
+                <label for="notificationMessage">Message</label>
+                <textarea id="notificationMessage" placeholder="VIP guest John Smith has arrived in room 501">This is a test notification from the Hudini Breakfast Module system.</textarea>
+            </div>
+            <div class="form-group">
+                <label for="notificationPriority">Priority</label>
+                <select id="notificationPriority">
+                    <option value="low">Low</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="high">High</option>
+                    <option value="critical">Critical</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Channels</label>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="channelPush" checked>
+                        <label for="channelPush">Push</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="channelWebSocket" checked>
+                        <label for="channelWebSocket">WebSocket</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="channelEmail">
+                        <label for="channelEmail">Email</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="channelSMS">
+                        <label for="channelSMS">SMS</label>
+                    </div>
+                </div>
+            </div>
+            <button id="sendTestNotification" class="btn">Send Test Notification</button>
+            <div id="testNotificationStatus"></div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="section">
+            <h2>Quick Test Actions</h2>
+            <button id="testVIPArrival" class="btn success">VIP Arrival Alert</button>
+            <button id="testUpsetGuest" class="btn danger">Upset Guest Alert</button>
+            <button id="testServiceDelay" class="btn warning">Service Delay Alert</button>
+            <button id="testBreakfastRush" class="btn secondary">Breakfast Rush Alert</button>
+        </div>
+
+        <!-- Recent Notifications -->
+        <div class="section">
+            <h2>Recent Notifications</h2>
+            <button id="refreshNotifications" class="btn secondary">Refresh</button>
+            <div id="notificationsList">
+                <p>Loading notifications...</p>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="section">
+            <h2>Notification Statistics</h2>
+            <button id="refreshStats" class="btn secondary">Refresh Stats</button>
+            <div id="statsContainer" class="stats-grid">
+                <div class="stat-card">
+                    <h3 id="statTotalSent">-</h3>
+                    <p>Total Sent</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="statTotalRead">-</h3>
+                    <p>Total Read</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="statTotalUnread">-</h3>
+                    <p>Unread</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="statAvgReadTime">-</h3>
+                    <p>Avg Read Time</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const API_BASE = '/api';
+        
+        // State
+        let deviceToken = null;
+        let isRegistered = false;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            checkNotificationPermission();
+            generateDeviceInfo();
+            loadNotifications();
+            loadStats();
+            connectWebSocket();
+            
+            // Set up event listeners
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            document.getElementById('enableNotifications').addEventListener('click', requestNotificationPermission);
+            document.getElementById('registerDevice').addEventListener('click', registerDevice);
+            document.getElementById('sendTestNotification').addEventListener('click', sendTestNotification);
+            document.getElementById('refreshNotifications').addEventListener('click', loadNotifications);
+            document.getElementById('refreshStats').addEventListener('click', loadStats);
+            
+            // Quick actions
+            document.getElementById('testVIPArrival').addEventListener('click', () => sendQuickNotification('vip_arrival'));
+            document.getElementById('testUpsetGuest').addEventListener('click', () => sendQuickNotification('upset_guest'));
+            document.getElementById('testServiceDelay').addEventListener('click', () => sendQuickNotification('service_delay'));
+            document.getElementById('testBreakfastRush').addEventListener('click', () => sendQuickNotification('breakfast_rush'));
+        }
+
+        // Check notification permission
+        function checkNotificationPermission() {
+            const statusDiv = document.getElementById('permissionStatus');
+            const enableBtn = document.getElementById('enableNotifications');
+            
+            if (!('Notification' in window)) {
+                statusDiv.className = 'status error';
+                statusDiv.textContent = 'This browser does not support notifications';
+                return;
+            }
+            
+            switch (Notification.permission) {
+                case 'granted':
+                    statusDiv.className = 'status success';
+                    statusDiv.textContent = '✅ Notifications are enabled';
+                    enableBtn.style.display = 'none';
+                    break;
+                case 'denied':
+                    statusDiv.className = 'status error';
+                    statusDiv.textContent = '❌ Notifications are blocked. Please enable them in browser settings.';
+                    enableBtn.style.display = 'none';
+                    break;
+                case 'default':
+                    statusDiv.className = 'status info';
+                    statusDiv.textContent = '⚠️ Click the button below to enable notifications';
+                    enableBtn.style.display = 'inline-block';
+                    break;
+            }
+        }
+
+        // Request notification permission
+        async function requestNotificationPermission() {
+            try {
+                const permission = await Notification.requestPermission();
+                checkNotificationPermission();
+                
+                if (permission === 'granted') {
+                    // Generate a mock service worker registration for demo
+                    generateMockPushToken();
+                }
+            } catch (error) {
+                console.error('Error requesting permission:', error);
+            }
+        }
+
+        // Generate device info
+        function generateDeviceInfo() {
+            const deviceName = document.getElementById('deviceName');
+            const userAgent = navigator.userAgent;
+            
+            if (userAgent.includes('iPhone')) {
+                deviceName.value = 'iPhone';
+                document.getElementById('deviceType').value = 'ios';
+            } else if (userAgent.includes('Android')) {
+                deviceName.value = 'Android Device';
+                document.getElementById('deviceType').value = 'android';
+            } else {
+                deviceName.value = 'Web Browser';
+                document.getElementById('deviceType').value = 'web';
+            }
+        }
+
+        // Generate mock push token for demo
+        function generateMockPushToken() {
+            // In a real app, this would come from service worker registration
+            deviceToken = 'demo_token_' + Math.random().toString(36).substring(2, 15);
+            console.log('Generated mock push token:', deviceToken);
+        }
+
+        // Register device
+        async function registerDevice() {
+            const statusDiv = document.getElementById('registrationStatus');
+            
+            if (!deviceToken) {
+                generateMockPushToken();
+            }
+            
+            const deviceData = {
+                device_id: 'demo_device_' + Math.random().toString(36).substring(2, 15),
+                device_type: document.getElementById('deviceType').value,
+                device_name: document.getElementById('deviceName').value,
+                push_token: deviceToken
+            };
+
+            try {
+                // For demo purposes, we'll simulate registration
+                console.log('Would register device:', deviceData);
+                
+                statusDiv.innerHTML = '<div class="status success">✅ Device registered successfully (Demo Mode)</div>';
+                isRegistered = true;
+                
+                // Show a browser notification to confirm
+                if (Notification.permission === 'granted') {
+                    new Notification('Device Registered', {
+                        body: 'Your device has been registered for push notifications',
+                        icon: '/favicon.ico'
+                    });
+                }
+                
+            } catch (error) {
+                console.error('Registration error:', error);
+                statusDiv.innerHTML = `<div class="status error">❌ Registration failed: ${error.message}</div>`;
+            }
+        }
+
+        // Send test notification
+        async function sendTestNotification() {
+            const statusDiv = document.getElementById('testNotificationStatus');
+            
+            const channels = [];
+            if (document.getElementById('channelPush').checked) channels.push('push');
+            if (document.getElementById('channelWebSocket').checked) channels.push('websocket');
+            if (document.getElementById('channelEmail').checked) channels.push('email');
+            if (document.getElementById('channelSMS').checked) channels.push('sms');
+            
+            if (channels.length === 0) {
+                statusDiv.innerHTML = '<div class="status error">❌ Please select at least one channel</div>';
+                return;
+            }
+            
+            const notificationData = {
+                title: document.getElementById('notificationTitle').value,
+                message: document.getElementById('notificationMessage').value,
+                priority: document.getElementById('notificationPriority').value,
+                channels: channels
+            };
+
+            try {
+                console.log('Would send notification:', notificationData);
+                
+                statusDiv.innerHTML = '<div class="status success">✅ Test notification sent (Demo Mode)</div>';
+                
+                // Show browser notification if push is enabled
+                if (channels.includes('push') && Notification.permission === 'granted') {
+                    new Notification(notificationData.title, {
+                        body: notificationData.message,
+                        icon: '/favicon.ico',
+                        badge: '/favicon.ico'
+                    });
+                }
+                
+                // Simulate WebSocket notification
+                if (channels.includes('websocket')) {
+                    simulateWebSocketNotification(notificationData);
+                }
+                
+            } catch (error) {
+                console.error('Send error:', error);
+                statusDiv.innerHTML = `<div class="status error">❌ Failed to send: ${error.message}</div>`;
+            }
+        }
+
+        // Send quick notification
+        function sendQuickNotification(type) {
+            const templates = {
+                vip_arrival: {
+                    title: 'VIP Guest Arrival',
+                    message: 'VIP guest Alexander Hamilton has arrived in Penthouse Suite 2',
+                    priority: 'high'
+                },
+                upset_guest: {
+                    title: 'Guest Requires Attention',
+                    message: 'Guest Victoria Chen in Suite 1501 is upset about cold breakfast',
+                    priority: 'critical'
+                },
+                service_delay: {
+                    title: 'Service Delay Alert',
+                    message: 'Average service time is 18.5 minutes, exceeding 15-minute threshold',
+                    priority: 'medium'
+                },
+                breakfast_rush: {
+                    title: 'Breakfast Rush Alert',
+                    message: 'High breakfast demand detected. Consider additional staffing.',
+                    priority: 'medium'
+                }
+            };
+            
+            const template = templates[type];
+            if (template && Notification.permission === 'granted') {
+                new Notification(template.title, {
+                    body: template.message,
+                    icon: '/favicon.ico'
+                });
+                
+                // Add to demo notification list
+                addDemoNotification(template);
+            }
+        }
+
+        // Load notifications (demo data)
+        function loadNotifications() {
+            const container = document.getElementById('notificationsList');
+            
+            // Demo notifications
+            const demoNotifications = [
+                {
+                    id: 1,
+                    title: 'VIP Guest Arrival',
+                    message: 'VIP guest Alexander Hamilton has arrived in Penthouse Suite 2',
+                    type: 'vip_arrival',
+                    priority: 'high',
+                    read: false,
+                    created_at: new Date(Date.now() - 5 * 60 * 1000).toISOString()
+                },
+                {
+                    id: 2,
+                    title: 'Service Delay Alert',
+                    message: 'Average service time is 16.2 minutes, exceeding threshold',
+                    type: 'service_delay',
+                    priority: 'medium',
+                    read: true,
+                    created_at: new Date(Date.now() - 15 * 60 * 1000).toISOString()
+                },
+                {
+                    id: 3,
+                    title: 'Breakfast Rush',
+                    message: 'High breakfast demand detected in main dining area',
+                    type: 'breakfast_rush',
+                    priority: 'medium',
+                    read: true,
+                    created_at: new Date(Date.now() - 45 * 60 * 1000).toISOString()
+                }
+            ];
+            
+            container.innerHTML = demoNotifications.map(notification => `
+                <div class="notification-item" style="border-left-color: ${notification.read ? '#ccc' : getPriorityColor(notification.priority)}">
+                    <h4>${notification.title} ${!notification.read ? '🔴' : ''}</h4>
+                    <p>${notification.message}</p>
+                    <div class="meta">
+                        ${notification.type} • ${notification.priority} priority • ${formatTime(notification.created_at)}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Load statistics (demo data)
+        function loadStats() {
+            // Demo stats
+            document.getElementById('statTotalSent').textContent = '147';
+            document.getElementById('statTotalRead').textContent = '132';
+            document.getElementById('statTotalUnread').textContent = '15';
+            document.getElementById('statAvgReadTime').textContent = '2m 34s';
+        }
+
+        // Add demo notification to list
+        function addDemoNotification(notification) {
+            const container = document.getElementById('notificationsList');
+            const newNotification = `
+                <div class="notification-item" style="border-left-color: ${getPriorityColor(notification.priority)}">
+                    <h4>${notification.title} 🔴</h4>
+                    <p>${notification.message}</p>
+                    <div class="meta">
+                        test • ${notification.priority} priority • just now
+                    </div>
+                </div>
+            `;
+            container.innerHTML = newNotification + container.innerHTML;
+        }
+
+        // Connect to WebSocket for real-time notifications
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
+
+            ws.onopen = () => {
+                console.log('WebSocket connected for notifications');
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.type && data.title) {
+                        handleWebSocketNotification(data);
+                    }
+                } catch (error) {
+                    console.error('Error parsing WebSocket message:', error);
+                }
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+
+            ws.onclose = () => {
+                console.log('WebSocket disconnected, reconnecting in 5s...');
+                setTimeout(connectWebSocket, 5000);
+            };
+        }
+
+        // Handle WebSocket notification
+        function handleWebSocketNotification(notification) {
+            console.log('Received WebSocket notification:', notification);
+            
+            // Show browser notification if permission granted
+            if (Notification.permission === 'granted') {
+                new Notification(notification.title, {
+                    body: notification.message,
+                    icon: '/favicon.ico'
+                });
+            }
+            
+            // Add to notification list
+            addDemoNotification(notification);
+            
+            // Update unread count
+            const currentUnread = parseInt(document.getElementById('statTotalUnread').textContent) || 0;
+            document.getElementById('statTotalUnread').textContent = currentUnread + 1;
+        }
+
+        // Simulate WebSocket notification
+        function simulateWebSocketNotification(notification) {
+            setTimeout(() => {
+                handleWebSocketNotification(notification);
+            }, 1000);
+        }
+
+        // Utility functions
+        function getPriorityColor(priority) {
+            const colors = {
+                low: '#6c757d',
+                medium: '#ffc107',
+                high: '#fd7e14',
+                critical: '#dc3545'
+            };
+            return colors[priority] || '#667eea';
+        }
+
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = now - date;
+            
+            if (diff < 60000) return 'just now';
+            if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago';
+            if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
+            return date.toLocaleDateString();
+        }
+    </script>
+</body>
+</html>
