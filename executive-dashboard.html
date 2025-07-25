@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Executive Dashboard - Hudini Breakfast Module</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0f1c;
+            color: #e0e7ff;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #312e81 100%);
+            padding: 20px 40px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.3) 0%, transparent 50%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 0.8; }
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .last-update {
+            font-size: 14px;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+        }
+
+        /* KPI Cards */
+        .kpi-section {
+            padding: 40px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        .kpi-card {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
+        }
+
+        .kpi-card.vip::before {
+            background: linear-gradient(90deg, #f59e0b 0%, #ef4444 100%);
+        }
+
+        .kpi-card.performance::before {
+            background: linear-gradient(90deg, #10b981 0%, #3b82f6 100%);
+        }
+
+        .kpi-label {
+            font-size: 14px;
+            color: #94a3b8;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .kpi-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 12px;
+        }
+
+        .kpi-trend {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .trend-up {
+            color: #10b981;
+        }
+
+        .trend-down {
+            color: #ef4444;
+        }
+
+        /* Charts Section */
+        .charts-section {
+            padding: 0 40px 40px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 24px;
+        }
+
+        .chart-container {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .chart-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .chart-filters {
+            display: flex;
+            gap: 12px;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 8px;
+            color: #94a3b8;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn:hover {
+            background: rgba(59, 130, 246, 0.3);
+            color: #ffffff;
+        }
+
+        .filter-btn.active {
+            background: #3b82f6;
+            color: #ffffff;
+            border-color: #3b82f6;
+        }
+
+        /* VIP List */
+        .vip-section {
+            padding: 0 40px 40px;
+        }
+
+        .vip-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .vip-card {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .vip-card.gold::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+            transform: rotate(45deg) translate(20px, -20px);
+        }
+
+        .vip-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 16px;
+        }
+
+        .vip-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .vip-room {
+            font-size: 14px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+
+        .vip-status {
+            padding: 4px 12px;
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 16px;
+            font-size: 12px;
+            color: #10b981;
+        }
+
+        .vip-status.upset {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+        }
+
+        .vip-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .vip-detail {
+            font-size: 14px;
+        }
+
+        .vip-detail-label {
+            color: #64748b;
+        }
+
+        .vip-detail-value {
+            color: #e2e8f0;
+            font-weight: 500;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                padding: 16px 20px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .kpi-section,
+            .charts-section,
+            .vip-section {
+                padding: 20px;
+            }
+
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-filters {
+                flex-wrap: wrap;
+            }
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #3b82f6;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Alert Banner */
+        .alert-banner {
+            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+            padding: 16px 40px;
+            display: none;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .alert-banner.show {
+            display: flex;
+        }
+
+        .alert-icon {
+            font-size: 24px;
+        }
+
+        .alert-text {
+            flex: 1;
+            font-size: 16px;
+            font-weight: 500;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Alert Banner -->
+    <div class="alert-banner" id="alertBanner">
+        <div class="alert-icon">⚠️</div>
+        <div class="alert-text" id="alertText">3 VIP guests require immediate attention</div>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <h1>Executive Dashboard</h1>
+            <div class="last-update">
+                <div class="pulse-dot"></div>
+                <span>Live Updates</span>
+                <span id="lastUpdate">--:--:--</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- KPI Section -->
+    <section class="kpi-section">
+        <div class="kpi-card vip">
+            <div class="kpi-label">Total VIP Guests</div>
+            <div class="kpi-value" id="totalVips">-</div>
+            <div class="kpi-trend trend-up">
+                <span>↑ 12%</span>
+                <span>vs last week</span>
+            </div>
+        </div>
+
+        <div class="kpi-card vip">
+            <div class="kpi-label">Upset Guests</div>
+            <div class="kpi-value" id="upsetGuests">-</div>
+            <div class="kpi-trend trend-down">
+                <span>↓ 8%</span>
+                <span>vs last week</span>
+            </div>
+        </div>
+
+        <div class="kpi-card performance">
+            <div class="kpi-label">VIP Satisfaction Rate</div>
+            <div class="kpi-value" id="satisfactionRate">-%</div>
+            <div class="kpi-trend trend-up">
+                <span>↑ 5%</span>
+                <span>vs last month</span>
+            </div>
+        </div>
+
+        <div class="kpi-card performance">
+            <div class="kpi-label">Avg Service Time</div>
+            <div class="kpi-value" id="avgServiceTime">-m</div>
+            <div class="kpi-trend trend-down">
+                <span>↓ 2m</span>
+                <span>improvement</span>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-label">Breakfast Revenue</div>
+            <div class="kpi-value" id="revenue">$-</div>
+            <div class="kpi-trend trend-up">
+                <span>↑ 18%</span>
+                <span>vs last month</span>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-label">Occupancy Rate</div>
+            <div class="kpi-value" id="occupancy">-%</div>
+            <div class="kpi-trend trend-up">
+                <span>↑ 3%</span>
+                <span>vs last week</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Charts Section -->
+    <section class="charts-section">
+        <div class="chart-container">
+            <div class="chart-header">
+                <h3 class="chart-title">VIP Guest Trends</h3>
+                <div class="chart-filters">
+                    <button class="filter-btn active" onclick="updateVIPChart('week')">Week</button>
+                    <button class="filter-btn" onclick="updateVIPChart('month')">Month</button>
+                    <button class="filter-btn" onclick="updateVIPChart('year')">Year</button>
+                </div>
+            </div>
+            <canvas id="vipTrendsChart" height="200"></canvas>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-header">
+                <h3 class="chart-title">Service Performance</h3>
+                <div class="chart-filters">
+                    <button class="filter-btn active" onclick="updateServiceChart('today')">Today</button>
+                    <button class="filter-btn" onclick="updateServiceChart('week')">Week</button>
+                    <button class="filter-btn" onclick="updateServiceChart('month')">Month</button>
+                </div>
+            </div>
+            <canvas id="serviceChart" height="200"></canvas>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-header">
+                <h3 class="chart-title">Revenue Analysis</h3>
+                <div class="chart-filters">
+                    <button class="filter-btn active" onclick="updateRevenueChart('week')">Week</button>
+                    <button class="filter-btn" onclick="updateRevenueChart('month')">Month</button>
+                    <button class="filter-btn" onclick="updateRevenueChart('quarter')">Quarter</button>
+                </div>
+            </div>
+            <canvas id="revenueChart" height="200"></canvas>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-header">
+                <h3 class="chart-title">Guest Preferences</h3>
+            </div>
+            <canvas id="preferencesChart" height="200"></canvas>
+        </div>
+    </section>
+
+    <!-- VIP Guest List -->
+    <section class="vip-section">
+        <div class="chart-header">
+            <h3 class="chart-title">VIP Guests Requiring Attention</h3>
+            <button class="filter-btn" onclick="loadVIPGuests()">Refresh</button>
+        </div>
+        <div class="vip-grid" id="vipGrid">
+            <!-- VIP cards will be dynamically added here -->
+        </div>
+    </section>
+
+    <script>
+        // Configuration
+        const API_BASE = '/api/demo'; // Using demo endpoints for now
+        const PROPERTY_ID = 'HOTEL001';
+        const UPDATE_INTERVAL = 30000; // 30 seconds
+
+        // Chart instances
+        let vipTrendsChart, serviceChart, revenueChart, preferencesChart;
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+            loadDashboardData();
+            startAutoRefresh();
+        });
+
+        // Initialize charts
+        function initializeCharts() {
+            // Chart defaults
+            Chart.defaults.color = '#94a3b8';
+            Chart.defaults.borderColor = 'rgba(148, 163, 184, 0.1)';
+
+            // VIP Trends Chart
+            const vipCtx = document.getElementById('vipTrendsChart').getContext('2d');
+            vipTrendsChart = new Chart(vipCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'VIP Guests',
+                        data: [],
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'Upset Guests',
+                        data: [],
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(148, 163, 184, 0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(148, 163, 184, 0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Service Performance Chart
+            const serviceCtx = document.getElementById('serviceChart').getContext('2d');
+            serviceChart = new Chart(serviceCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Service Time (min)',
+                        data: [],
+                        backgroundColor: '#3b82f6'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(148, 163, 184, 0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Revenue Chart
+            const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+            revenueChart = new Chart(revenueCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Revenue',
+                        data: [],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(148, 163, 184, 0.1)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(148, 163, 184, 0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Preferences Chart
+            const prefCtx = document.getElementById('preferencesChart').getContext('2d');
+            preferencesChart = new Chart(prefCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: [
+                            '#3b82f6',
+                            '#8b5cf6',
+                            '#10b981',
+                            '#f59e0b',
+                            '#ef4444'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Load dashboard data
+        async function loadDashboardData() {
+            try {
+                // Update timestamp
+                updateTimestamp();
+
+                // Load KPIs
+                await loadKPIs();
+
+                // Load charts
+                await updateVIPChart('week');
+                await updateServiceChart('today');
+                await updateRevenueChart('week');
+                await loadPreferences();
+
+                // Load VIP guests
+                await loadVIPGuests();
+
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+            }
+        }
+
+        // Load KPIs
+        async function loadKPIs() {
+            try {
+                const response = await fetch(`${API_BASE}/executive/kpis?property_id=${PROPERTY_ID}`);
+                const data = await response.json();
+                
+                document.getElementById('totalVips').textContent = data.total_vips || '0';
+                document.getElementById('upsetGuests').textContent = data.upset_guests || '0';
+                document.getElementById('satisfactionRate').textContent = Math.round(data.satisfaction_rate) + '%';
+                document.getElementById('avgServiceTime').textContent = data.avg_service_time + 'm';
+                document.getElementById('revenue').textContent = '$' + (data.revenue || 0).toLocaleString();
+                document.getElementById('occupancy').textContent = data.occupancy_rate + '%';
+
+                // Check for alerts
+                const alertsResponse = await fetch(`${API_BASE}/executive/alerts?property_id=${PROPERTY_ID}`);
+                const alertsData = await alertsResponse.json();
+                
+                if (alertsData.alerts && alertsData.alerts.length > 0) {
+                    const alert = alertsData.alerts[0];
+                    document.getElementById('alertText').textContent = alert.message;
+                    document.getElementById('alertBanner').classList.add('show');
+                } else {
+                    document.getElementById('alertBanner').classList.remove('show');
+                }
+            } catch (error) {
+                console.error('Error loading KPIs:', error);
+                // Fallback to demo data
+                document.getElementById('totalVips').textContent = '47';
+                document.getElementById('upsetGuests').textContent = '3';
+                document.getElementById('satisfactionRate').textContent = '94%';
+                document.getElementById('avgServiceTime').textContent = '12m';
+                document.getElementById('revenue').textContent = '$12,450';
+                document.getElementById('occupancy').textContent = '87%';
+            }
+        }
+
+        // Update VIP trends chart
+        async function updateVIPChart(period) {
+            try {
+                // Update active button
+                document.querySelectorAll('.chart-filters .filter-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                event.target.classList.add('active');
+
+                // Fetch data from API
+                const response = await fetch(`${API_BASE}/executive/vip-trends?property_id=${PROPERTY_ID}&period=${period}`);
+                const data = await response.json();
+
+                vipTrendsChart.data.labels = data.labels;
+                vipTrendsChart.data.datasets[0].data = data.vip_counts;
+                vipTrendsChart.data.datasets[1].data = data.upset_counts;
+                vipTrendsChart.update();
+            } catch (error) {
+                console.error('Error loading VIP trends:', error);
+                // Fallback to sample data
+                let labels, vipData, upsetData;
+                
+                if (period === 'week') {
+                    labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                    vipData = [42, 45, 43, 47, 48, 52, 47];
+                    upsetData = [2, 1, 3, 2, 1, 2, 3];
+                } else if (period === 'month') {
+                    labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+                    vipData = [180, 195, 188, 203];
+                    upsetData = [8, 6, 9, 7];
+                } else {
+                    labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+                    vipData = [720, 780, 810, 890, 920, 960];
+                    upsetData = [35, 28, 32, 25, 22, 20];
+                }
+
+                vipTrendsChart.data.labels = labels;
+                vipTrendsChart.data.datasets[0].data = vipData;
+                vipTrendsChart.data.datasets[1].data = upsetData;
+                vipTrendsChart.update();
+            }
+        }
+
+        // Update service chart
+        async function updateServiceChart(period) {
+            // Update active button
+            document.querySelectorAll('.chart-filters .filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Generate sample data
+            let labels, data;
+            
+            if (period === 'today') {
+                labels = ['6AM', '7AM', '8AM', '9AM', '10AM', '11AM'];
+                data = [8, 12, 15, 13, 10, 8];
+            } else if (period === 'week') {
+                labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                data = [12, 11, 13, 12, 11, 14, 12];
+            } else {
+                labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+                data = [12.5, 12.2, 11.8, 12.0];
+            }
+
+            serviceChart.data.labels = labels;
+            serviceChart.data.datasets[0].data = data;
+            serviceChart.update();
+        }
+
+        // Update revenue chart
+        async function updateRevenueChart(period) {
+            // Update active button
+            document.querySelectorAll('.chart-filters .filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Generate sample data
+            let labels, data;
+            
+            if (period === 'week') {
+                labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                data = [1850, 2100, 1950, 2200, 2350, 2800, 2450];
+            } else if (period === 'month') {
+                labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+                data = [14200, 15300, 14800, 16200];
+            } else {
+                labels = ['Jan', 'Feb', 'Mar'];
+                data = [58000, 62000, 65500];
+            }
+
+            revenueChart.data.labels = labels;
+            revenueChart.data.datasets[0].data = data;
+            revenueChart.update();
+        }
+
+        // Load preferences
+        async function loadPreferences() {
+            preferencesChart.data.labels = ['Continental', 'American', 'Healthy', 'Vegetarian', 'Special Diet'];
+            preferencesChart.data.datasets[0].data = [35, 25, 20, 15, 5];
+            preferencesChart.update();
+        }
+
+        // Load VIP guests
+        async function loadVIPGuests() {
+            const vipGrid = document.getElementById('vipGrid');
+            vipGrid.innerHTML = '';
+
+            // Sample VIP guests data
+            const vipGuests = [
+                {
+                    name: 'Alexander Hamilton',
+                    room: 'Penthouse Suite 2',
+                    status: 'upset',
+                    issue: 'Cold breakfast',
+                    stayDuration: '5 nights',
+                    preferences: 'Gluten-free',
+                    isGold: true
+                },
+                {
+                    name: 'Victoria Chen',
+                    room: 'Suite 1501',
+                    status: 'upset',
+                    issue: 'Long wait time',
+                    stayDuration: '3 nights',
+                    preferences: 'Vegan',
+                    isGold: false
+                },
+                {
+                    name: 'Marcus Johnson',
+                    room: 'Presidential Suite',
+                    status: 'upset',
+                    issue: 'Wrong order',
+                    stayDuration: '7 nights',
+                    preferences: 'Continental',
+                    isGold: true
+                }
+            ];
+
+            // Create VIP cards
+            vipGuests.forEach(guest => {
+                const card = document.createElement('div');
+                card.className = `vip-card ${guest.isGold ? 'gold' : ''}`;
+                card.innerHTML = `
+                    <div class="vip-header">
+                        <div>
+                            <div class="vip-name">${guest.name}</div>
+                            <div class="vip-room">${guest.room}</div>
+                        </div>
+                        <div class="vip-status ${guest.status}">${guest.status.toUpperCase()}</div>
+                    </div>
+                    <div class="vip-details">
+                        <div class="vip-detail">
+                            <span class="vip-detail-label">Issue: </span>
+                            <span class="vip-detail-value">${guest.issue}</span>
+                        </div>
+                        <div class="vip-detail">
+                            <span class="vip-detail-label">Stay: </span>
+                            <span class="vip-detail-value">${guest.stayDuration}</span>
+                        </div>
+                        <div class="vip-detail">
+                            <span class="vip-detail-label">Preferences: </span>
+                            <span class="vip-detail-value">${guest.preferences}</span>
+                        </div>
+                        <div class="vip-detail">
+                            <span class="vip-detail-label">Action: </span>
+                            <span class="vip-detail-value">Manager notified</span>
+                        </div>
+                    </div>
+                `;
+                vipGrid.appendChild(card);
+            });
+        }
+
+        // Update timestamp
+        function updateTimestamp() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('en-US', { 
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            document.getElementById('lastUpdate').textContent = timeStr;
+        }
+
+        // Start auto refresh
+        function startAutoRefresh() {
+            setInterval(() => {
+                loadDashboardData();
+            }, UPDATE_INTERVAL);
+        }
+
+        // WebSocket connection for real-time updates
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
+
+            ws.onopen = () => {
+                console.log('WebSocket connected');
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === 'vip_update') {
+                    loadVIPGuests();
+                } else if (data.type === 'metrics_update') {
+                    loadKPIs();
+                }
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+
+            ws.onclose = () => {
+                console.log('WebSocket disconnected, reconnecting...');
+                setTimeout(connectWebSocket, 5000);
+            };
+        }
+
+        // Initialize WebSocket
+        connectWebSocket();
+    </script>
+</body>
+</html>

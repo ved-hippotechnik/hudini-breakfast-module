@@ -40,6 +40,7 @@ func SetupRoutes(router *gin.Engine, breakfastService *services.BreakfastService
 	breakfastHandler := NewBreakfastHandler(breakfastService)
 	guestHandler := NewGuestHandler(guestService)
 	auditHandler := NewAuditHandler(auditService)
+	executiveHandler := NewExecutiveHandler(breakfastService, guestService)
 
 	// Public routes
 	api := router.Group("/api")
@@ -63,6 +64,15 @@ func SetupRoutes(router *gin.Engine, breakfastService *services.BreakfastService
 			demo.GET("/analytics/realtime", 
 				validation.ValidatePropertyID(),
 				breakfastHandler.GetRealtimeMetrics)
+			
+			// Executive demo routes
+			demo.GET("/executive/kpis", executiveHandler.GetExecutiveKPIs)
+			demo.GET("/executive/vip-trends", executiveHandler.GetVIPTrends)
+			demo.GET("/executive/service-performance", executiveHandler.GetServicePerformance)
+			demo.GET("/executive/revenue-analysis", executiveHandler.GetRevenueAnalysis)
+			demo.GET("/executive/guest-preferences", executiveHandler.GetGuestPreferences)
+			demo.GET("/executive/upset-guests", executiveHandler.GetUpsetVIPGuests)
+			demo.GET("/executive/alerts", executiveHandler.GetExecutiveAlerts)
 		}
 	}
 
@@ -134,6 +144,19 @@ func SetupRoutes(router *gin.Engine, breakfastService *services.BreakfastService
 			admin.GET("/audit/users/:user_id/activity", auditHandler.GetUserActivity)
 			admin.GET("/audit/resources/:resource/:resource_id/history", auditHandler.GetResourceHistory)
 			admin.GET("/audit/summary", auditHandler.GetAuditSummary)
+		}
+		
+		// Executive routes (require manager or admin role)
+		executive := protected.Group("/executive")
+		executive.Use(authHandler.RequireRole("manager", "admin"))
+		{
+			executive.GET("/kpis", executiveHandler.GetExecutiveKPIs)
+			executive.GET("/vip-trends", executiveHandler.GetVIPTrends)
+			executive.GET("/service-performance", executiveHandler.GetServicePerformance)
+			executive.GET("/revenue-analysis", executiveHandler.GetRevenueAnalysis)
+			executive.GET("/guest-preferences", executiveHandler.GetGuestPreferences)
+			executive.GET("/upset-guests", executiveHandler.GetUpsetVIPGuests)
+			executive.GET("/alerts", executiveHandler.GetExecutiveAlerts)
 		}
 	}
 
