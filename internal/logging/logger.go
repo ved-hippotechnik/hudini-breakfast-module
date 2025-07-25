@@ -102,3 +102,16 @@ func Fatal(args ...interface{}) {
 func Fatalf(format string, args ...interface{}) {
 	Logger.Fatalf(format, args...)
 }
+
+// GetLogger returns the logger instance
+func GetLogger() *logrus.Logger {
+	if Logger == nil {
+		// Initialize with default config if not already initialized
+		InitLogger(LoggingConfig{
+			Level:  "info",
+			Format: "text",
+			Output: "stdout",
+		})
+	}
+	return Logger
+}

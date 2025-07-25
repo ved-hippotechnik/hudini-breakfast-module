@@ -11,6 +11,7 @@ import (
 type Config struct {
 	Port           string
 	DatabaseURL    string
+	RedisURL       string
 	JWTSecret      string
 	GinMode        string
 	OHIP           OHIPConfig
@@ -114,6 +115,7 @@ func Load() *Config {
 	return &Config{
 		Port:        getEnvOrDefault("PORT", "3001"),
 		DatabaseURL: os.Getenv("DATABASE_URL"),
+		RedisURL:    getEnvOrDefault("REDIS_URL", ""),
 		JWTSecret:   os.Getenv("JWT_SECRET"),
 		GinMode:     getEnvOrDefault("GIN_MODE", "debug"),
 		OHIP: OHIPConfig{

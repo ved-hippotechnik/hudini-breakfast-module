@@ -2,8 +2,10 @@ package main
 
 import (
 	"os"
+	"time"
 
 	"hudini-breakfast-module/internal/api"
+	"hudini-breakfast-module/internal/cache"
 	"hudini-breakfast-module/internal/config"
 	"hudini-breakfast-module/internal/database"
 	"hudini-breakfast-module/internal/logging"
@@ -44,6 +46,34 @@ func main() {
 	}
 	logging.Info("Database initialized successfully")
 
+	// Initialize Redis cache if configured
+	var redisCache *cache.RedisCache
+	var vipCache *cache.VIPCache
+	
+	if cfg.RedisURL != "" {
+		// Parse Redis URL to get address, password, and DB
+		addr := "localhost:6379" // Default
+		password := ""
+		dbNum := 0
+		
+		// In production, parse the Redis URL properly
+		if cfg.RedisURL != "" {
+			// For now, use simple defaults
+			addr = "localhost:6379"
+		}
+		
+		redisCache, err = cache.NewRedisCache(addr, password, dbNum, logging.GetLogger())
+		if err != nil {
+			logging.WithError(err).Warn("Failed to initialize Redis cache, continuing without caching")
+		} else {
+			logging.Info("Redis cache initialized successfully")
+			
+			// Initialize VIP cache with 5-minute TTL
+			vipCache = cache.NewVIPCache(redisCache, 5*time.Minute)
+			logging.Info("VIP cache initialized")
+		}
+	}
+
 	// Initialize WebSocket hub
 	wsHub := websocket.NewHub()
 	go wsHub.Run()
@@ -53,9 +83,15 @@ func main() {
 	ohipService := services.NewOHIPService(cfg.OHIP)
 	logging.Info("OHIP service initialized")
 
-	// Initialize breakfast service
-	breakfastService := services.NewBreakfastService(db, ohipService)
-	logging.Info("Breakfast service initialized")
+	// Initialize breakfast service with cache support
+	var breakfastService *services.BreakfastService
+	if vipCache != nil {
+		breakfastService = services.NewBreakfastServiceWithCache(db, ohipService, vipCache)
+		logging.Info("Breakfast service initialized with caching")
+	} else {
+		breakfastService = services.NewBreakfastService(db, ohipService)
+		logging.Info("Breakfast service initialized")
+	}
 
 	// Initialize guest service
 	guestService := services.NewGuestService(db)

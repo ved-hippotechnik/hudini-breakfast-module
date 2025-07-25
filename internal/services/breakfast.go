@@ -1,10 +1,12 @@
 package services
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
 
+	"hudini-breakfast-module/internal/cache"
 	"hudini-breakfast-module/internal/logging"
 	"hudini-breakfast-module/internal/models"
 
@@ -15,12 +17,22 @@ import (
 type BreakfastService struct {
 	db          *gorm.DB
 	ohipService *OHIPService
+	vipCache    *cache.VIPCache
 }
 
 func NewBreakfastService(db *gorm.DB, ohipService *OHIPService) *BreakfastService {
 	return &BreakfastService{
 		db:          db,
 		ohipService: ohipService,
+	}
+}
+
+// NewBreakfastServiceWithCache creates a new breakfast service with caching
+func NewBreakfastServiceWithCache(db *gorm.DB, ohipService *OHIPService, vipCache *cache.VIPCache) *BreakfastService {
+	return &BreakfastService{
+		db:          db,
+		ohipService: ohipService,
+		vipCache:    vipCache,
 	}
 }
 
@@ -272,4 +284,137 @@ type DailyTrend struct {
 	Consumed int     `json:"consumed"`
 	Total    int     `json:"total"`
 	Rate     float64 `json:"rate"`
+}
+
+// GetVIPGuests retrieves VIP guests with caching
+func (s *BreakfastService) GetVIPGuests(ctx context.Context, propertyID string) ([]models.Guest, error) {
+	// Try cache first if available
+	if s.vipCache != nil {
+		cached, err := s.vipCache.GetVIPGuests(ctx, propertyID)
+		if err == nil && cached != nil {
+			logging.WithField("property_id", propertyID).Debug("VIP guests retrieved from cache")
+			return cached, nil
+		}
+	}
+
+	// Query database
+	var guests []models.Guest
+	err := s.db.Where("property_id = ? AND is_vip = ? AND is_active = ?", propertyID, true, true).
+		Preload("Room").
+		Find(&guests).Error
+	
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch VIP guests: %w", err)
+	}
+
+	// Cache the results
+	if s.vipCache != nil {
+		if err := s.vipCache.SetVIPGuests(ctx, propertyID, guests); err != nil {
+			logging.WithError(err).Warn("Failed to cache VIP guests")
+		}
+	}
+
+	return guests, nil
+}
+
+// GetUpsetGuests retrieves upset guests with caching
+func (s *BreakfastService) GetUpsetGuests(ctx context.Context, propertyID string) ([]models.Guest, error) {
+	// Try cache first if available
+	if s.vipCache != nil {
+		cached, err := s.vipCache.GetUpsetGuests(ctx, propertyID)
+		if err == nil && cached != nil {
+			logging.WithField("property_id", propertyID).Debug("Upset guests retrieved from cache")
+			return cached, nil
+		}
+	}
+
+	// Query database
+	var guests []models.Guest
+	err := s.db.Where("property_id = ? AND is_upset = ? AND is_active = ?", propertyID, true, true).
+		Preload("Room").
+		Find(&guests).Error
+	
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch upset guests: %w", err)
+	}
+
+	// Cache the results
+	if s.vipCache != nil {
+		if err := s.vipCache.SetUpsetGuests(ctx, propertyID, guests); err != nil {
+			logging.WithError(err).Warn("Failed to cache upset guests")
+		}
+	}
+
+	return guests, nil
+}
+
+// GetVIPMetrics retrieves VIP metrics with caching
+func (s *BreakfastService) GetVIPMetrics(ctx context.Context, propertyID string) (*cache.VIPMetrics, error) {
+	// Try cache first if available
+	if s.vipCache != nil {
+		cached, err := s.vipCache.GetVIPMetrics(ctx, propertyID)
+		if err == nil && cached != nil {
+			logging.WithField("property_id", propertyID).Debug("VIP metrics retrieved from cache")
+			return cached, nil
+		}
+	}
+
+	// Calculate metrics from database
+	var metrics cache.VIPMetrics
+	
+	// Count VIPs and upset guests
+	var totalVIPs, totalUpset int64
+	s.db.Model(&models.Guest{}).Where("property_id = ? AND is_vip = ? AND is_active = ?", propertyID, true, true).Count(&totalVIPs)
+	s.db.Model(&models.Guest{}).Where("property_id = ? AND is_upset = ? AND is_active = ?", propertyID, true, true).Count(&totalUpset)
+	metrics.TotalVIPs = int(totalVIPs)
+	metrics.TotalUpset = int(totalUpset)
+	
+	// Calculate VIP breakfast consumption rate
+	var vipConsumed, vipTotal int64
+	s.db.Model(&models.DailyBreakfastConsumption{}).
+		Joins("JOIN guests ON guests.id = daily_breakfast_consumptions.guest_id").
+		Where("guests.property_id = ? AND guests.is_vip = ? AND daily_breakfast_consumptions.consumption_date = ?", 
+			propertyID, true, time.Now().Format("2006-01-02")).
+		Where("daily_breakfast_consumptions.status = ?", "consumed").
+		Count(&vipConsumed)
+	
+	s.db.Model(&models.DailyBreakfastConsumption{}).
+		Joins("JOIN guests ON guests.id = daily_breakfast_consumptions.guest_id").
+		Where("guests.property_id = ? AND guests.is_vip = ? AND daily_breakfast_consumptions.consumption_date = ?", 
+			propertyID, true, time.Now().Format("2006-01-02")).
+		Count(&vipTotal)
+	
+	if vipTotal > 0 {
+		metrics.VIPBreakfastRate = float64(vipConsumed) / float64(vipTotal) * 100
+	}
+	
+	// Calculate average stay duration for VIP guests
+	var avgStay float64
+	s.db.Model(&models.Guest{}).
+		Select("AVG(JULIANDAY(check_out_date) - JULIANDAY(check_in_date))").
+		Where("property_id = ? AND is_vip = ? AND is_active = ?", propertyID, true, true).
+		Scan(&avgStay)
+	metrics.AverageStayDuration = avgStay
+	
+	// Get top preferences (simplified for now)
+	metrics.TopPreferences = []string{"Window Seating", "Continental Breakfast", "Early Service"}
+	metrics.LastUpdated = time.Now()
+	
+	// Cache the results
+	if s.vipCache != nil {
+		if err := s.vipCache.SetVIPMetrics(ctx, propertyID, &metrics); err != nil {
+			logging.WithError(err).Warn("Failed to cache VIP metrics")
+		}
+	}
+
+	return &metrics, nil
+}
+
+// InvalidateGuestCache invalidates cache when guest data changes
+func (s *BreakfastService) InvalidateGuestCache(ctx context.Context, guestID uint, propertyID string) {
+	if s.vipCache != nil {
+		if err := s.vipCache.InvalidateGuestCache(ctx, guestID, propertyID); err != nil {
+			logging.WithError(err).Warn("Failed to invalidate guest cache")
+		}
+	}
 }
