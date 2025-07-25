@@ -49,6 +49,12 @@ type Guest struct {
 	OHIPNumber      string    `json:"ohip_number"`
 	PropertyID      string    `json:"property_id" gorm:"not null"`
 	IsActive        bool      `json:"is_active" gorm:"default:true"`
+	// VIP and Special Guest Fields
+	IsVIP           bool      `json:"is_vip" gorm:"default:false"`
+	IsUpset         bool      `json:"is_upset" gorm:"default:false"`
+	SpecialNotes    string    `json:"special_notes" gorm:"type:text"`
+	HandlingInstr   string    `json:"handling_instructions" gorm:"type:text"`
+	PMSSpecialReq   string    `json:"pms_special_requests" gorm:"type:text"`
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
 	DeletedAt       gorm.DeletedAt `json:"-" gorm:"index"`
@@ -107,6 +113,57 @@ type OHIPTransaction struct {
 	UpdatedAt         time.Time `json:"updated_at"`
 }
 
+// GuestPreference represents guest preferences and dietary requirements
+type GuestPreference struct {
+	ID              uint           `json:"id" gorm:"primaryKey"`
+	GuestID         uint           `json:"guest_id" gorm:"not null;uniqueIndex"`
+	Guest           Guest          `json:"guest" gorm:"foreignKey:GuestID"`
+	SeatingPref     string         `json:"seating_preference"` // window, booth, patio, quiet
+	DietaryRestr    string         `json:"dietary_restrictions" gorm:"type:text"` // JSON array stored as text
+	FavoriteDishes  string         `json:"favorite_dishes" gorm:"type:text"` // JSON array stored as text
+	Allergies       string         `json:"allergies" gorm:"type:text"` // JSON array stored as text
+	SpecialInstr    string         `json:"special_instructions" gorm:"type:text"`
+	CreatedAt       time.Time      `json:"created_at"`
+	UpdatedAt       time.Time      `json:"updated_at"`
+	DeletedAt       gorm.DeletedAt `json:"-" gorm:"index"`
+}
+
+// Outlet represents a dining outlet that accepts breakfast packages
+type Outlet struct {
+	ID              uint           `json:"id" gorm:"primaryKey"`
+	PropertyID      string         `json:"property_id" gorm:"not null"`
+	Property        Property       `json:"property" gorm:"foreignKey:PropertyID;references:PropertyID"`
+	Name            string         `json:"name" gorm:"not null"`
+	Location        string         `json:"location"`
+	AcceptsPackage  bool           `json:"accepts_breakfast_package" gorm:"default:true"`
+	OpenTime        string         `json:"open_time"` // Format: "06:30"
+	CloseTime       string         `json:"close_time"` // Format: "10:30"
+	Capacity        int            `json:"capacity"`
+	MenuType        string         `json:"menu_type"` // buffet, a_la_carte, continental
+	IsActive        bool           `json:"is_active" gorm:"default:true"`
+	CreatedAt       time.Time      `json:"created_at"`
+	UpdatedAt       time.Time      `json:"updated_at"`
+	DeletedAt       gorm.DeletedAt `json:"-" gorm:"index"`
+}
+
+// StaffComment represents categorized comments on guests or consumption
+type StaffComment struct {
+	ID              uint           `json:"id" gorm:"primaryKey"`
+	GuestID         *uint          `json:"guest_id,omitempty"`
+	Guest           *Guest         `json:"guest,omitempty" gorm:"foreignKey:GuestID"`
+	ConsumptionID   *uint          `json:"consumption_id,omitempty"`
+	Consumption     *DailyBreakfastConsumption `json:"consumption,omitempty" gorm:"foreignKey:ConsumptionID"`
+	StaffID         uint           `json:"staff_id" gorm:"not null"`
+	Staff           Staff          `json:"staff" gorm:"foreignKey:StaffID"`
+	Category        string         `json:"category" gorm:"not null"` // dietary, preference, complaint, compliment, general
+	Comment         string         `json:"comment" gorm:"type:text;not null"`
+	IsResolved      bool           `json:"is_resolved" gorm:"default:false"`
+	ResolvedBy      *uint          `json:"resolved_by,omitempty"`
+	ResolvedAt      *time.Time     `json:"resolved_at,omitempty"`
+	CreatedAt       time.Time      `json:"created_at"`
+	UpdatedAt       time.Time      `json:"updated_at"`
+}
+
 // RoomBreakfastStatus represents the current breakfast status for a room
 type RoomBreakfastStatus struct {
 	PropertyID       string    `json:"property_id"`
@@ -123,4 +180,25 @@ type RoomBreakfastStatus struct {
 	ConsumedBy       string    `json:"consumed_by"`
 	CheckInDate      *time.Time `json:"check_in_date,omitempty"`
 	CheckOutDate     *time.Time `json:"check_out_date,omitempty"`
+	// VIP Status Fields
+	IsVIP            bool      `json:"is_vip"`
+	IsUpset          bool      `json:"is_upset"`
+	SpecialRequests  string    `json:"special_requests"`
+}
+
+// AuditLog represents system audit logs for compliance and security
+type AuditLog struct {
+	ID         uint      `json:"id" gorm:"primaryKey"`
+	UserID     *uint     `json:"user_id" gorm:"index"`
+	User       *Staff    `json:"user,omitempty" gorm:"foreignKey:UserID"`
+	Action     string    `json:"action" gorm:"not null;index"`
+	Resource   string    `json:"resource" gorm:"not null;index"`
+	ResourceID string    `json:"resource_id" gorm:"index"`
+	OldValues  string    `json:"old_values" gorm:"type:text"`
+	NewValues  string    `json:"new_values" gorm:"type:text"`
+	IPAddress  string    `json:"ip_address" gorm:"index"`
+	UserAgent  string    `json:"user_agent"`
+	Status     string    `json:"status" gorm:"default:'success';index"` // success, failed
+	Error      string    `json:"error" gorm:"type:text"`
+	CreatedAt  time.Time `json:"created_at" gorm:"index"`
 }

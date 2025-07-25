@@ -1,13 +1,14 @@
 package main
 
 import (
-	"log"
 	"os"
 
 	"hudini-breakfast-module/internal/api"
 	"hudini-breakfast-module/internal/config"
 	"hudini-breakfast-module/internal/database"
+	"hudini-breakfast-module/internal/logging"
 	"hudini-breakfast-module/internal/services"
+	"hudini-breakfast-module/internal/websocket"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -16,29 +17,60 @@ import (
 func main() {
 	// Load environment variables
 	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found")
+		// Don't log error here, we'll handle it after logger initialization
 	}
 
 	// Load configuration
 	cfg := config.Load()
 
+	// Initialize logger
+	logging.InitLogger(logging.LoggingConfig{
+		Level:    cfg.Logging.Level,
+		Format:   cfg.Logging.Format,
+		Output:   cfg.Logging.Output,
+		FilePath: cfg.Logging.FilePath,
+	})
+
+	logging.Info("Starting Hudini Breakfast Module server...")
+
 	// Initialize database
-	db, err := database.Initialize(cfg.DatabaseURL)
+	db, err := database.InitializeWithConfig(cfg.DatabaseURL, database.DatabaseConfig{
+		MaxOpenConns:    cfg.Database.MaxOpenConns,
+		MaxIdleConns:    cfg.Database.MaxIdleConns,
+		ConnMaxLifetime: cfg.Database.ConnMaxLifetime,
+	})
 	if err != nil {
-		log.Fatalf("Failed to initialize database: %v", err)
+		logging.Fatalf("Failed to initialize database: %v", err)
 	}
+	logging.Info("Database initialized successfully")
+
+	// Initialize WebSocket hub
+	wsHub := websocket.NewHub()
+	go wsHub.Run()
+	logging.Info("WebSocket hub initialized")
 
 	// Initialize OHIP service
 	ohipService := services.NewOHIPService(cfg.OHIP)
+	logging.Info("OHIP service initialized")
 
 	// Initialize breakfast service
 	breakfastService := services.NewBreakfastService(db, ohipService)
+	logging.Info("Breakfast service initialized")
+
+	// Initialize guest service
+	guestService := services.NewGuestService(db)
+	logging.Info("Guest service initialized")
+	
+	// Initialize audit service
+	auditService := services.NewAuditService(db)
+	logging.Info("Audit service initialized")
 
 	// Setup router
 	router := gin.Default()
-	
+
 	// Setup API routes
-	api.SetupRoutes(router, breakfastService, db, cfg.JWTSecret)
+	api.SetupRoutes(router, breakfastService, guestService, auditService, db, cfg.JWTSecret, wsHub)
+	logging.Info("API routes configured")
 
 	// Start server
 	port := os.Getenv("PORT")
@@ -46,8 +78,8 @@ func main() {
 		port = "8080"
 	}
 
-	log.Printf("Server starting on port %s", port)
+	logging.WithField("port", port).Info("Server starting...")
 	if err := router.Run(":" + port); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+		logging.Fatalf("Failed to start server: %v", err)
 	}
 }

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <title>Hudini Breakfast Module</title>
     <style>
@@ -7,6 +7,36 @@
             font-family: Arial, sans-serif; 
             margin: 40px; 
             background: #f5f5f5; 
+            transition: all 0.3s ease;
+        }
+        body.dark-mode {
+            background: linear-gradient(135deg, #1a1d2e 0%, #2d3748 100%);
+            color: #e2e8f0;
+        }
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #667eea;
+            border: 2px solid #667eea;
+            color: white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 20px;
+            z-index: 1000;
+        }
+        body.dark-mode .theme-toggle {
+            background: #4a5568;
+            border-color: #4a5568;
+        }
+        .theme-toggle:hover {
+            transform: scale(1.1);
         }
         .container { 
             max-width: 800px; 
@@ -14,7 +44,12 @@
             background: white; 
             padding: 30px; 
             border-radius: 10px; 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        body.dark-mode .container {
+            background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
         }
         h1 { 
             color: #333; 
@@ -36,10 +71,17 @@
             padding: 10px 20px; 
             border-radius: 5px; 
             cursor: pointer; 
-            margin: 10px 5px; 
+            margin: 10px 5px;
+            transition: all 0.3s ease;
         }
         button:hover { 
             background: #0056b3; 
+        }
+        body.dark-mode button {
+            background: #4a5568;
+        }
+        body.dark-mode button:hover {
+            background: #667eea;
         }
         #result { 
             background: #f8f9fa; 
@@ -47,11 +89,27 @@
             padding: 15px; 
             border-radius: 5px; 
             margin-top: 20px; 
-            font-family: monospace; 
+            font-family: monospace;
+            transition: all 0.3s ease;
+        }
+        body.dark-mode #result {
+            background: #1a1d2e;
+            border-color: #4a5568;
+            color: #e2e8f0;
+        }
+        body.dark-mode .status {
+            background: #2d3748;
+            border-color: #4a5568;
+            color: #e2e8f0;
         }
     </style>
 </head>
 <body>
+    <!-- Theme Toggle Button -->
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme">
+        🌙
+    </button>
+    
     <div class="container">
         <h1>🍳 Hudini Breakfast Module</h1>
         <div class="status">
@@ -112,6 +170,35 @@
                 `;
             }
         }
+
+        // Theme management
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('hudini-theme') || 'light';
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+                document.querySelector('.theme-toggle').innerHTML = '☀️';
+            }
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            const themeToggle = document.querySelector('.theme-toggle');
+            
+            if (body.classList.contains('dark-mode')) {
+                body.classList.remove('dark-mode');
+                themeToggle.innerHTML = '🌙';
+                localStorage.setItem('hudini-theme', 'light');
+            } else {
+                body.classList.add('dark-mode');
+                themeToggle.innerHTML = '☀️';
+                localStorage.setItem('hudini-theme', 'dark');
+            }
+        }
+
+        // Initialize theme on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTheme();
+        });
     </script>
 </body>
 </html>

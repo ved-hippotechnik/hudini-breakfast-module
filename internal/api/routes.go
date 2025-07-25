@@ -1,24 +1,45 @@
 package api
 
 import (
+	"os"
+	"strings"
+
+	// "hudini-breakfast-module/internal/middleware"
 	"hudini-breakfast-module/internal/services"
+	"hudini-breakfast-module/internal/validation"
+	"hudini-breakfast-module/internal/websocket"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
-func SetupRoutes(router *gin.Engine, breakfastService *services.BreakfastService, db *gorm.DB, jwtSecret string) {
-	// CORS middleware
+func SetupRoutes(router *gin.Engine, breakfastService *services.BreakfastService, guestService *services.GuestService, auditService *services.AuditService, db *gorm.DB, jwtSecret string, wsHub *websocket.Hub) {
+	// CORS middleware with security improvements
 	config := cors.DefaultConfig()
-	config.AllowAllOrigins = true
+
+	// Get allowed origins from environment
+	allowedOrigins := os.Getenv("ALLOWED_ORIGINS")
+	if allowedOrigins != "" {
+		config.AllowOrigins = strings.Split(allowedOrigins, ",")
+	} else {
+		// Default for development
+		config.AllowOrigins = []string{"http://localhost:3000", "http://localhost:3001", "http://localhost:8080"}
+	}
+
 	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
+	config.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
+	config.AllowCredentials = true
 	router.Use(cors.New(config))
+	
+	// Add audit middleware
+	// router.Use(middleware.AuditMiddleware(auditService))
 
 	// Initialize handlers
 	authHandler := NewAuthHandler(db, jwtSecret)
 	breakfastHandler := NewBreakfastHandler(breakfastService)
-	guestHandler := NewGuestHandler(breakfastService)
+	guestHandler := NewGuestHandler(guestService)
+	auditHandler := NewAuditHandler(auditService)
 
 	// Public routes
 	api := router.Group("/api")
@@ -28,6 +49,20 @@ func SetupRoutes(router *gin.Engine, breakfastService *services.BreakfastService
 		{
 			auth.POST("/register", authHandler.Register)
 			auth.POST("/login", authHandler.Login)
+		}
+
+		// Public demo endpoints (no auth required)
+		demo := api.Group("/demo")
+		{
+			demo.GET("/rooms/breakfast-status", 
+				validation.ValidatePropertyID(),
+				breakfastHandler.GetRoomBreakfastStatus)
+			demo.GET("/analytics/advanced", 
+				validation.ValidatePropertyID(),
+				breakfastHandler.GetAdvancedAnalytics)
+			demo.GET("/analytics/realtime", 
+				validation.ValidatePropertyID(),
+				breakfastHandler.GetRealtimeMetrics)
 		}
 	}
 
@@ -39,23 +74,73 @@ func SetupRoutes(router *gin.Engine, breakfastService *services.BreakfastService
 		protected.GET("/auth/me", authHandler.GetProfile)
 
 		// Breakfast Room Management - Main functionality
-		protected.GET("/rooms/breakfast-status", breakfastHandler.GetRoomBreakfastStatus)
-		protected.GET("/consumption/history", breakfastHandler.GetConsumptionHistory)
-		protected.GET("/reports/daily", breakfastHandler.GetDailyReport)
-		protected.GET("/analytics", breakfastHandler.GetAnalytics)
-		
+		protected.GET("/rooms/breakfast-status", 
+			validation.ValidatePropertyID(),
+			breakfastHandler.GetRoomBreakfastStatus)
+		protected.GET("/consumption/history", 
+			validation.ValidatePropertyID(),
+			validation.ValidateDateFormat("start_date"),
+			validation.ValidateDateFormat("end_date"),
+			breakfastHandler.GetConsumptionHistory)
+		protected.GET("/reports/daily", 
+			validation.ValidatePropertyID(),
+			validation.ValidateDateFormat("date"),
+			breakfastHandler.GetDailyReport)
+
+		// Analytics and Business Intelligence endpoints
+		protected.GET("/analytics", 
+			validation.ValidatePropertyID(),
+			breakfastHandler.GetAnalytics)
+		protected.GET("/analytics/advanced", 
+			validation.ValidatePropertyID(),
+			breakfastHandler.GetAdvancedAnalytics)
+		protected.GET("/analytics/realtime", 
+			validation.ValidatePropertyID(),
+			breakfastHandler.GetRealtimeMetrics)
+		protected.GET("/analytics/predictive", 
+			validation.ValidatePropertyID(),
+			breakfastHandler.GetPredictiveInsights)
+		protected.GET("/analytics/business-intelligence", 
+			validation.ValidatePropertyID(),
+			breakfastHandler.GetBusinessIntelligence)
+
 		// Guest Management
-		protected.GET("/guests", guestHandler.GetGuests)
-		protected.POST("/guests", guestHandler.CreateGuest)
-		protected.PUT("/guests/:id", guestHandler.UpdateGuest)
-		
+		protected.GET("/guests", 
+			validation.ValidatePropertyID(),
+			guestHandler.GetGuests)
+		protected.POST("/guests", 
+			validation.RequestSizeLimit(1024*1024), // 1MB limit
+			guestHandler.CreateGuest)
+		protected.PUT("/guests/:id", 
+			validation.RequestSizeLimit(1024*1024), // 1MB limit
+			guestHandler.UpdateGuest)
+
 		// Staff actions (require staff role)
 		staff := protected.Group("/")
 		staff.Use(authHandler.RequireRole("staff", "manager", "admin"))
 		{
-			staff.POST("/rooms/:room_number/consume", breakfastHandler.MarkBreakfastConsumed)
+			staff.POST("/rooms/:room_number/consume", 
+				validation.ValidatePropertyID(),
+				validation.ValidateRoomNumber(),
+				breakfastHandler.MarkBreakfastConsumed)
+		}
+		
+		// Admin-only routes
+		admin := protected.Group("/")
+		admin.Use(authHandler.RequireRole("admin"))
+		{
+			// Audit log endpoints
+			admin.GET("/audit/logs", auditHandler.GetAuditLogs)
+			admin.GET("/audit/users/:user_id/activity", auditHandler.GetUserActivity)
+			admin.GET("/audit/resources/:resource/:resource_id/history", auditHandler.GetResourceHistory)
+			admin.GET("/audit/summary", auditHandler.GetAuditSummary)
 		}
 	}
+
+	// WebSocket endpoint
+	router.GET("/ws", func(c *gin.Context) {
+		wsHub.ServeWS(c.Writer, c.Request)
+	})
 
 	// Health check
 	router.GET("/health", HealthCheck)

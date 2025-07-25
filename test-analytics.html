@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        
+        .test-button {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        
+        .test-button:hover {
+            background: #0056b3;
+        }
+        
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+    <h1>Analytics Dashboard Test</h1>
+    
+    <div class="test-section">
+        <h2>Server Health Check</h2>
+        <button class="test-button" onclick="testHealth()">Test Health Endpoint</button>
+        <div id="health-result" class="result" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Analytics Endpoints</h2>
+        <button class="test-button" onclick="testAnalytics('advanced')">Test Advanced Analytics</button>
+        <button class="test-button" onclick="testAnalytics('realtime')">Test Realtime Metrics</button>
+        <button class="test-button" onclick="testAnalytics('predictive')">Test Predictive Insights</button>
+        <div id="analytics-result" class="result" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Room Status</h2>
+        <button class="test-button" onclick="testRoomStatus()">Test Room Status</button>
+        <div id="room-result" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080';
+        
+        async function testHealth() {
+            const resultDiv = document.getElementById('health-result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = 'Testing...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `<h3>✅ Health Check Passed</h3><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `<h3>❌ Health Check Failed</h3><pre>Status: ${response.status}</pre>`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `<h3>❌ Connection Error</h3><pre>${error.message}</pre>`;
+            }
+        }
+        
+        async function testAnalytics(type) {
+            const resultDiv = document.getElementById('analytics-result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = 'Testing...';
+            
+            try {
+                const endpoints = {
+                    'advanced': '/api/demo/analytics/advanced?property_id=HOTEL001',
+                    'realtime': '/api/demo/analytics/realtime?property_id=HOTEL001',
+                    'predictive': '/api/analytics/predictive?property_id=HOTEL001'
+                };
+                
+                const response = await fetch(`${API_BASE}${endpoints[type]}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `<h3>✅ ${type} Analytics Success</h3><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `<h3>❌ ${type} Analytics Failed</h3><pre>Status: ${response.status}\n${JSON.stringify(data, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `<h3>❌ Connection Error</h3><pre>${error.message}</pre>`;
+            }
+        }
+        
+        async function testRoomStatus() {
+            const resultDiv = document.getElementById('room-result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = 'Testing...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/demo/rooms/breakfast-status?property_id=HOTEL001`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `<h3>✅ Room Status Success</h3><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `<h3>❌ Room Status Failed</h3><pre>Status: ${response.status}\n${JSON.stringify(data, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `<h3>❌ Connection Error</h3><pre>${error.message}</pre>`;
+            }
+        }
+        
+        // Auto-test health on page load
+        window.onload = function() {
+            testHealth();
+        };
+    </script>
+</body>
+</html>

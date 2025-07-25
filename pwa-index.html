@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="description" content="Hudini Breakfast Module - Real-time breakfast tracking for hotels">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Hudini Breakfast">
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+    
+    <title>Hudini Breakfast Module</title>
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Preconnect to external resources -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Modern CSS Framework -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        /* Custom CSS Variables for theming */
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #10b981;
+            --danger-color: #ef4444;
+            --background: #f3f4f6;
+            --surface: #ffffff;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+        }
+
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --background: #111827;
+                --surface: #1f2937;
+                --text-primary: #f9fafb;
+                --text-secondary: #9ca3af;
+            }
+        }
+
+        /* Responsive grid system */
+        .room-grid {
+            display: grid;
+            gap: 1rem;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        }
+
+        /* Mobile-first responsive design */
+        @media (max-width: 640px) {
+            .room-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 0.5rem;
+            }
+        }
+
+        /* Touch-friendly tap targets */
+        button, .clickable {
+            min-height: 44px;
+            min-width: 44px;
+        }
+
+        /* Smooth transitions */
+        * {
+            transition: color 0.2s, background-color 0.2s, border-color 0.2s;
+        }
+
+        /* Loading skeleton animation */
+        .skeleton {
+            animation: skeleton-loading 1s linear infinite alternate;
+        }
+
+        @keyframes skeleton-loading {
+            0% { background-color: hsl(200, 20%, 80%); }
+            100% { background-color: hsl(200, 20%, 95%); }
+        }
+
+        /* PWA install prompt */
+        .install-prompt {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900">
+    <!-- App Shell -->
+    <div id="app" class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-50">
+            <div class="container mx-auto px-4 py-3">
+                <div class="flex items-center justify-between">
+                    <h1 class="text-xl font-bold text-gray-900 dark:text-white">
+                        Hudini Breakfast
+                    </h1>
+                    <div class="flex items-center gap-4">
+                        <button id="notification-btn" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                            </svg>
+                        </button>
+                        <button id="menu-btn" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 lg:hidden">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-1 container mx-auto px-4 py-6">
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
+                    <div class="text-sm text-gray-600 dark:text-gray-400">Total Rooms</div>
+                    <div class="text-2xl font-bold text-gray-900 dark:text-white" id="total-rooms">-</div>
+                </div>
+                <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
+                    <div class="text-sm text-gray-600 dark:text-gray-400">Consumed</div>
+                    <div class="text-2xl font-bold text-green-600" id="consumed-count">-</div>
+                </div>
+                <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
+                    <div class="text-sm text-gray-600 dark:text-gray-400">Pending</div>
+                    <div class="text-2xl font-bold text-yellow-600" id="pending-count">-</div>
+                </div>
+                <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
+                    <div class="text-sm text-gray-600 dark:text-gray-400">No Breakfast</div>
+                    <div class="text-2xl font-bold text-gray-600" id="no-breakfast-count">-</div>
+                </div>
+            </div>
+
+            <!-- Search and Filters -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm mb-6">
+                <div class="flex flex-col lg:flex-row gap-4">
+                    <input type="search" id="search-input" placeholder="Search rooms..." 
+                           class="flex-1 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700">
+                    <select id="filter-select" class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700">
+                        <option value="all">All Rooms</option>
+                        <option value="has_breakfast">Has Breakfast</option>
+                        <option value="consumed">Consumed</option>
+                        <option value="pending">Pending</option>
+                    </select>
+                    <button id="refresh-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        Refresh
+                    </button>
+                </div>
+            </div>
+
+            <!-- Room Grid -->
+            <div id="room-grid" class="room-grid">
+                <!-- Skeleton loaders -->
+                <div class="skeleton h-32 rounded-lg"></div>
+                <div class="skeleton h-32 rounded-lg"></div>
+                <div class="skeleton h-32 rounded-lg"></div>
+                <div class="skeleton h-32 rounded-lg"></div>
+            </div>
+        </main>
+
+        <!-- Offline indicator -->
+        <div id="offline-indicator" class="hidden fixed bottom-4 left-4 bg-yellow-500 text-white px-4 py-2 rounded-lg shadow-lg">
+            You're offline - Some features may be limited
+        </div>
+
+        <!-- Install prompt -->
+        <div id="install-prompt" class="install-prompt hidden bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg">
+            <div class="flex items-center gap-4">
+                <span>Install Hudini Breakfast app</span>
+                <button id="install-btn" class="px-4 py-2 bg-white text-blue-600 rounded hover:bg-gray-100">
+                    Install
+                </button>
+                <button id="dismiss-btn" class="text-white hover:text-gray-200">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // PWA App Logic
+        class HudiniBreakfastApp {
+            constructor() {
+                this.apiUrl = window.location.origin + '/api';
+                this.wsUrl = `ws${location.protocol === 'https:' ? 's' : ''}://${location.host}/ws`;
+                this.ws = null;
+                this.rooms = [];
+                this.deferredPrompt = null;
+                
+                this.init();
+            }
+
+            async init() {
+                // Register service worker
+                if ('serviceWorker' in navigator) {
+                    try {
+                        const registration = await navigator.serviceWorker.register('/sw.js');
+                        console.log('ServiceWorker registered:', registration);
+                    } catch (error) {
+                        console.error('ServiceWorker registration failed:', error);
+                    }
+                }
+
+                // Setup event listeners
+                this.setupEventListeners();
+                
+                // Initialize WebSocket
+                this.initWebSocket();
+                
+                // Load initial data
+                await this.loadRooms();
+                
+                // Check online status
+                this.updateOnlineStatus();
+            }
+
+            setupEventListeners() {
+                // Search and filter
+                document.getElementById('search-input').addEventListener('input', (e) => this.handleSearch(e));
+                document.getElementById('filter-select').addEventListener('change', (e) => this.handleFilter(e));
+                document.getElementById('refresh-btn').addEventListener('click', () => this.loadRooms());
+                
+                // PWA install
+                window.addEventListener('beforeinstallprompt', (e) => {
+                    e.preventDefault();
+                    this.deferredPrompt = e;
+                    document.getElementById('install-prompt').classList.remove('hidden');
+                });
+                
+                document.getElementById('install-btn').addEventListener('click', () => this.installPWA());
+                document.getElementById('dismiss-btn').addEventListener('click', () => {
+                    document.getElementById('install-prompt').classList.add('hidden');
+                });
+                
+                // Online/offline events
+                window.addEventListener('online', () => this.updateOnlineStatus());
+                window.addEventListener('offline', () => this.updateOnlineStatus());
+            }
+
+            initWebSocket() {
+                this.ws = new WebSocket(this.wsUrl);
+                
+                this.ws.onopen = () => {
+                    console.log('WebSocket connected');
+                };
+                
+                this.ws.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    this.handleWebSocketMessage(data);
+                };
+                
+                this.ws.onclose = () => {
+                    console.log('WebSocket disconnected, reconnecting in 5s...');
+                    setTimeout(() => this.initWebSocket(), 5000);
+                };
+                
+                this.ws.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                };
+            }
+
+            handleWebSocketMessage(data) {
+                if (data.type === 'room_update') {
+                    this.updateRoom(data);
+                } else if (data.type === 'consumption_update') {
+                    this.loadRooms(); // Reload all rooms for now
+                }
+            }
+
+            async loadRooms() {
+                try {
+                    const response = await fetch(`${this.apiUrl}/demo/rooms/breakfast-status?property_id=PROP001`);
+                    const data = await response.json();
+                    
+                    if (data.status === 'success') {
+                        this.rooms = data.data.rooms;
+                        this.renderRooms();
+                        this.updateStats();
+                    }
+                } catch (error) {
+                    console.error('Failed to load rooms:', error);
+                    // Show cached data if available
+                    this.loadCachedRooms();
+                }
+            }
+
+            renderRooms(filteredRooms = null) {
+                const grid = document.getElementById('room-grid');
+                const rooms = filteredRooms || this.rooms;
+                
+                grid.innerHTML = rooms.map(room => `
+                    <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow ${room.has_breakfast ? '' : 'opacity-60'}"
+                         data-room="${room.room_number}">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="text-lg font-semibold">${room.room_number}</h3>
+                            ${room.has_breakfast ? `
+                                <span class="px-2 py-1 text-xs rounded-full ${
+                                    room.consumed_today ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                                }">
+                                    ${room.consumed_today ? 'Consumed' : 'Pending'}
+                                </span>
+                            ` : '<span class="text-xs text-gray-500">No Breakfast</span>'}
+                        </div>
+                        ${room.guest_name ? `
+                            <p class="text-sm text-gray-600 dark:text-gray-400">${room.guest_name}</p>
+                        ` : ''}
+                        ${room.has_breakfast && !room.consumed_today ? `
+                            <button class="mt-3 w-full px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+                                    onclick="app.markConsumed('${room.room_number}')">
+                                Mark Consumed
+                            </button>
+                        ` : ''}
+                    </div>
+                `).join('');
+            }
+
+            updateStats() {
+                const total = this.rooms.length;
+                const consumed = this.rooms.filter(r => r.consumed_today).length;
+                const hasBreakfast = this.rooms.filter(r => r.has_breakfast).length;
+                const pending = hasBreakfast - consumed;
+                const noBreakfast = total - hasBreakfast;
+                
+                document.getElementById('total-rooms').textContent = total;
+                document.getElementById('consumed-count').textContent = consumed;
+                document.getElementById('pending-count').textContent = pending;
+                document.getElementById('no-breakfast-count').textContent = noBreakfast;
+            }
+
+            handleSearch(event) {
+                const query = event.target.value.toLowerCase();
+                const filtered = this.rooms.filter(room => 
+                    room.room_number.toLowerCase().includes(query) ||
+                    (room.guest_name && room.guest_name.toLowerCase().includes(query))
+                );
+                this.renderRooms(filtered);
+            }
+
+            handleFilter(event) {
+                const filter = event.target.value;
+                let filtered = this.rooms;
+                
+                switch (filter) {
+                    case 'has_breakfast':
+                        filtered = this.rooms.filter(r => r.has_breakfast);
+                        break;
+                    case 'consumed':
+                        filtered = this.rooms.filter(r => r.consumed_today);
+                        break;
+                    case 'pending':
+                        filtered = this.rooms.filter(r => r.has_breakfast && !r.consumed_today);
+                        break;
+                }
+                
+                this.renderRooms(filtered);
+            }
+
+            async markConsumed(roomNumber) {
+                // In a real app, this would make an API call
+                alert(`Marking room ${roomNumber} as consumed`);
+            }
+
+            updateOnlineStatus() {
+                const indicator = document.getElementById('offline-indicator');
+                if (navigator.onLine) {
+                    indicator.classList.add('hidden');
+                } else {
+                    indicator.classList.remove('hidden');
+                }
+            }
+
+            async installPWA() {
+                if (this.deferredPrompt) {
+                    this.deferredPrompt.prompt();
+                    const { outcome } = await this.deferredPrompt.userChoice;
+                    console.log(`User response to install prompt: ${outcome}`);
+                    this.deferredPrompt = null;
+                    document.getElementById('install-prompt').classList.add('hidden');
+                }
+            }
+
+            loadCachedRooms() {
+                // Load from localStorage or IndexedDB
+                const cached = localStorage.getItem('hudini_rooms');
+                if (cached) {
+                    this.rooms = JSON.parse(cached);
+                    this.renderRooms();
+                    this.updateStats();
+                }
+            }
+
+            cacheRooms() {
+                localStorage.setItem('hudini_rooms', JSON.stringify(this.rooms));
+            }
+        }
+
+        // Initialize app
+        const app = new HudiniBreakfastApp();
+    </script>
+</body>
+</html>

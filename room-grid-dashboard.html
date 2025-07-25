@@ -1,0 +1,2206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Hotel breakfast package management system">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Breakfast Manager">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- iOS Meta Tags -->
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+    
+    <title>Hotel Room Grid Dashboard - Hudini Breakfast Module</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            color: #333;
+            transition: all 0.3s ease;
+        }
+
+        /* Dark mode styles */
+        body.dark-mode {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .dashboard-container {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        body.dark-mode .header {
+            background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+        }
+
+        body.dark-mode .room-grid-container,
+        body.dark-mode .stats-overview .stat-card,
+        body.dark-mode .status-legend {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        body.dark-mode .room-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .modal-content {
+            background: #2d3748;
+            color: #e0e0e0;
+        }
+
+        /* Theme toggle button */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 20px;
+        }
+
+        .theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        /* WebSocket connection status */
+        .connection-status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            border-radius: 25px;
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .connection-status.connected {
+            background: #28a745;
+            color: white;
+        }
+
+        .connection-status.disconnected {
+            background: #dc3545;
+            color: white;
+        }
+
+        .connection-status.connecting {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .header-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .date-picker {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .date-picker input {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        .date-picker input::placeholder {
+            color: rgba(255,255,255,0.7);
+        }
+
+        .sync-btn {
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .sync-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .status-legend {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+        }
+
+        .legend-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .legend-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 2px solid rgba(0,0,0,0.1);
+        }
+
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .room-grid-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .floor-section {
+            margin-bottom: 30px;
+        }
+
+        .floor-header {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .rooms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .room-card {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 12px;
+            padding: 15px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .room-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        /* Bulk selection styles */
+        .room-card.bulk-mode {
+            border: 2px dashed #6c757d;
+        }
+
+        .room-card.room-selected {
+            border: 3px solid #007bff !important;
+            box-shadow: 0 0 15px rgba(0,123,255,0.3);
+        }
+
+        .selection-indicator {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #007bff;
+            color: white;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        /* Toast animations */
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+
+        /* Enhanced button styles */
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .btn-primary { background: #007bff; color: white; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-warning { background: #ffc107; color: #212529; }
+        .btn-danger { background: #dc3545; color: white; }
+
+        /* Floor section styling */
+        .floor-section {
+            margin-bottom: 30px;
+        }
+
+        .room-number {
+            font-size: 1.1em;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .room-status {
+            font-size: 0.75em;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .guest-info {
+            font-size: 0.7em;
+            color: #666;
+            margin-top: auto;
+        }
+
+        /* Room Status Colors */
+        .room-vacant {
+            background: #e8f5e8;
+            border-color: #28a745;
+            color: #155724;
+        }
+
+        .room-occupied {
+            background: #fff3cd;
+            border-color: #ffc107;
+            color: #856404;
+        }
+
+        .room-occupied-breakfast {
+            background: #cce7ff;
+            border-color: #007bff;
+            color: #004085;
+        }
+
+        .room-consumed {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+
+        .room-maintenance {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+
+        .room-out-of-order {
+            background: #e2e3e5;
+            border-color: #6c757d;
+            color: #383d41;
+        }
+
+        .breakfast-indicator {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #28a745;
+        }
+
+        .consumed-indicator {
+            background: #007bff;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #333;
+        }
+
+        .modal-title {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .modal-section {
+            margin-bottom: 15px;
+        }
+
+        .modal-label {
+            font-weight: 600;
+            color: #555;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .modal-value {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-container {
+                padding: 10px;
+            }
+            
+            .rooms-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+                gap: 8px;
+            }
+            
+            .room-card {
+                padding: 10px 5px;
+                min-height: 80px;
+            }
+            
+            .header-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Theme Toggle Button -->
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark Mode">
+        🌙
+    </button>
+
+    <!-- WebSocket Connection Status -->
+    <div class="connection-status disconnected" id="connectionStatus">
+        🔴 Disconnected
+    </div>
+
+    <div class="dashboard-container">
+        <div class="header">
+            <h1>🏨 Hotel Room Grid Dashboard</h1>
+            <div class="header-controls">
+                <div class="date-picker">
+                    <label for="selectedDate" style="color: white;">Date:</label>
+                    <input type="date" id="selectedDate" />
+                </div>
+                <div>
+                    <button class="sync-btn" onclick="syncFromPMS()">🔄 Sync from PMS</button>
+                    <button class="sync-btn" onclick="refreshData()">🔍 Refresh</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-legend">
+            <div class="legend-title">Room Status Legend</div>
+            <div class="legend-items">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #e8f5e8; border-color: #28a745;"></div>
+                    <span>Vacant/Available</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #fff3cd; border-color: #ffc107;"></div>
+                    <span>Occupied (No Breakfast)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #cce7ff; border-color: #007bff;"></div>
+                    <span>Occupied + Breakfast Package</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #d4edda; border-color: #28a745;"></div>
+                    <span>Breakfast Consumed Today</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #f8d7da; border-color: #dc3545;"></div>
+                    <span>Maintenance</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #e2e3e5; border-color: #6c757d;"></div>
+                    <span>Out of Order</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-overview">
+            <div class="stat-card">
+                <div class="stat-number" id="totalRooms">0</div>
+                <div class="stat-label">Total Rooms</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="occupiedRooms">0</div>
+                <div class="stat-label">Occupied</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="breakfastPackages">0</div>
+                <div class="stat-label">Breakfast Packages</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="consumedToday">0</div>
+                <div class="stat-label">Consumed Today</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="pendingConsumption">0</div>
+                <div class="stat-label">Pending</div>
+            </div>
+        </div>
+
+        <div class="room-grid-container">
+            <!-- Enhanced Controls Section -->
+            <div class="controls-section" style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                    <!-- Search Bar -->
+                    <div style="flex: 1; min-width: 200px;">
+                        <input type="text" id="searchInput" placeholder="🔍 Search rooms or guests..." 
+                               style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
+                    </div>
+                    
+                    <!-- Floor Filter -->
+                    <div>
+                        <select id="floorFilter" style="padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                            <option value="">All Floors</option>
+                            <option value="1">Floor 1</option>
+                            <option value="2">Floor 2</option>
+                            <option value="3">Floor 3</option>
+                            <option value="4">Floor 4</option>
+                            <option value="5">Floor 5</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Status Filter -->
+                    <div>
+                        <select id="statusFilter" style="padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                            <option value="">All Status</option>
+                            <option value="vacant">Vacant</option>
+                            <option value="occupied">Occupied</option>
+                            <option value="with-breakfast">With Breakfast</option>
+                            <option value="consumed">Consumed Today</option>
+                            <option value="maintenance">Maintenance</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Date Selector -->
+                    <div>
+                        <input type="date" id="selectedDate" style="padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="refreshData()" class="btn btn-primary">🔄 Refresh</button>
+                        <button onclick="toggleBulkMode()" class="btn btn-secondary" id="bulkModeBtn">📋 Bulk Actions</button>
+                        <button onclick="exportData()" class="btn btn-success">📊 Export</button>
+                    </div>
+                </div>
+                
+                <!-- Bulk Actions Panel (Hidden by default) -->
+                <div id="bulkActionsPanel" style="display: none; margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 5px; border: 1px solid #dee2e6;">
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <span id="selectedCount">0 rooms selected</span>
+                        <button onclick="markSelectedConsumed()" class="btn btn-primary">Mark Consumed</button>
+                        <button onclick="markSelectedMaintenance()" class="btn btn-warning">Mark Maintenance</button>
+                        <button onclick="clearSelection()" class="btn btn-secondary">Clear Selection</button>
+                    </div>
+                </div>
+            </div>
+            <div id="loadingIndicator" class="loading">
+                <div class="spinner"></div>
+                <p>Loading room data...</p>
+            </div>
+            <div id="roomGrid" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Room Details Modal -->
+    <div id="roomModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 class="modal-title" id="modalTitle">Room Details</h2>
+            
+            <div class="modal-section">
+                <span class="modal-label">Room Number:</span>
+                <span class="modal-value" id="modalRoomNumber"></span>
+            </div>
+            
+            <div class="modal-section">
+                <span class="modal-label">Floor:</span>
+                <span class="modal-value" id="modalFloor"></span>
+            </div>
+            
+            <div class="modal-section">
+                <span class="modal-label">Room Type:</span>
+                <span class="modal-value" id="modalRoomType"></span>
+            </div>
+            
+            <div class="modal-section">
+                <span class="modal-label">Status:</span>
+                <span class="modal-value" id="modalStatus"></span>
+            </div>
+            
+            <div id="guestSection" style="display: none;">
+                <div class="modal-section">
+                    <span class="modal-label">Guest Name:</span>
+                    <span class="modal-value" id="modalGuestName"></span>
+                </div>
+                
+                <div class="modal-section">
+                    <span class="modal-label">Check-in Date:</span>
+                    <span class="modal-value" id="modalCheckIn"></span>
+                </div>
+                
+                <div class="modal-section">
+                    <span class="modal-label">Check-out Date:</span>
+                    <span class="modal-value" id="modalCheckOut"></span>
+                </div>
+                
+                <div class="modal-section">
+                    <span class="modal-label">Breakfast Package:</span>
+                    <span class="modal-value" id="modalBreakfastPackage"></span>
+                </div>
+                
+                <div class="modal-section">
+                    <span class="modal-label">Breakfast Count:</span>
+                    <span class="modal-value" id="modalBreakfastCount"></span>
+                </div>
+                
+                <div class="modal-section">
+                    <span class="modal-label">Consumed Today:</span>
+                    <span class="modal-value" id="modalConsumedToday"></span>
+                </div>
+                
+                <div id="consumptionDetails" style="display: none;">
+                    <div class="modal-section">
+                        <span class="modal-label">Consumed At:</span>
+                        <span class="modal-value" id="modalConsumedAt"></span>
+                    </div>
+                    
+                    <div class="modal-section">
+                        <span class="modal-label">Consumed By:</span>
+                        <span class="modal-value" id="modalConsumedBy"></span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="viewRoomHistory()">View History</button>
+                <button class="btn btn-success" id="markConsumedBtn" onclick="markBreakfastConsumed()" style="display: none;">Mark as Consumed</button>
+                <button class="btn btn-danger" onclick="closeModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentRoomData = [];
+        let filteredRoomData = [];
+        let selectedRooms = new Set();
+        let bulkModeActive = false;
+        let selectedRoom = null;
+        let websocket = null;
+        let reconnectAttempts = 0;
+        const maxReconnectAttempts = 5;
+        
+        const API_BASE_URL = 'http://localhost:8080/api';
+        const WS_URL = 'ws://localhost:8080/ws';
+        const PROPERTY_ID = 'HOTEL001';
+        
+        // JWT Token for authentication - will be refreshed automatically
+        let JWT_TOKEN = null;
+
+        // Initialize the dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Dashboard loading...');
+            
+            // Initialize theme
+            initializeTheme();
+            
+            // Register service worker for PWA
+            registerServiceWorker();
+            
+            // Initialize WebSocket connection
+            initializeWebSocket();
+            
+            // Set today's date
+            document.getElementById('selectedDate').value = new Date().toISOString().split('T')[0];
+            
+            // Load initial data
+            refreshData();
+            
+            // Add event listeners
+            document.getElementById('selectedDate').addEventListener('change', refreshData);
+            document.getElementById('searchInput').addEventListener('input', applyFilters);
+            document.getElementById('floorFilter').addEventListener('change', applyFilters);
+            document.getElementById('statusFilter').addEventListener('change', applyFilters);
+            
+            // Keyboard shortcuts
+            document.addEventListener('keydown', handleKeyboardShortcuts);
+        });
+
+        // Progressive Web App - Service Worker Registration
+        async function registerServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                try {
+                    const registration = await navigator.serviceWorker.register('/sw.js');
+                    console.log('ServiceWorker registered successfully');
+                    
+                    // Listen for updates
+                    registration.addEventListener('updatefound', () => {
+                        const newWorker = registration.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                showToast('New version available! Please refresh.', 'info');
+                            }
+                        });
+                    });
+                } catch (error) {
+                    console.log('ServiceWorker registration failed: ', error);
+                }
+            }
+        }
+
+        // WebSocket connection management
+        function initializeWebSocket() {
+            connectWebSocket();
+        }
+
+        function connectWebSocket() {
+            try {
+                websocket = new WebSocket(WS_URL);
+                updateConnectionStatus('connecting');
+                
+                websocket.onopen = function(event) {
+                    console.log('WebSocket connected');
+                    updateConnectionStatus('connected');
+                    reconnectAttempts = 0;
+                };
+                
+                websocket.onmessage = function(event) {
+                    try {
+                        const data = JSON.parse(event.data);
+                        handleWebSocketMessage(data);
+                    } catch (error) {
+                        console.error('Error parsing WebSocket message:', error);
+                    }
+                };
+                
+                websocket.onclose = function(event) {
+                    console.log('WebSocket connection closed');
+                    updateConnectionStatus('disconnected');
+                    
+                    // Attempt to reconnect
+                    if (reconnectAttempts < maxReconnectAttempts) {
+                        reconnectAttempts++;
+                        console.log(`Attempting to reconnect... (${reconnectAttempts}/${maxReconnectAttempts})`);
+                        setTimeout(connectWebSocket, 2000 * reconnectAttempts);
+                    }
+                };
+                
+                websocket.onerror = function(error) {
+                    console.error('WebSocket error:', error);
+                    updateConnectionStatus('disconnected');
+                };
+            } catch (error) {
+                console.error('Failed to create WebSocket connection:', error);
+                updateConnectionStatus('disconnected');
+            }
+        }
+
+        function handleWebSocketMessage(data) {
+            switch (data.type) {
+                case 'room_update':
+                    handleRoomUpdate(data);
+                    break;
+                case 'breakfast_update':
+                    handleBreakfastUpdate(data);
+                    break;
+                default:
+                    console.log('Unknown message type:', data.type);
+            }
+        }
+
+        function handleRoomUpdate(data) {
+            // Update room data in real-time
+            const roomIndex = currentRoomData.findIndex(room => 
+                room.room_number === data.room_number && room.property_id === data.property_id
+            );
+            
+            if (roomIndex !== -1) {
+                currentRoomData[roomIndex] = { ...currentRoomData[roomIndex], ...data.data };
+                applyFilters(); // Refresh the display
+                showToast(`Room ${data.room_number} updated`, 'info');
+            }
+        }
+
+        function handleBreakfastUpdate(data) {
+            // Update breakfast consumption status
+            const roomIndex = currentRoomData.findIndex(room => 
+                room.room_number === data.room_number && room.property_id === data.property_id
+            );
+            
+            if (roomIndex !== -1) {
+                currentRoomData[roomIndex].consumed_today = data.consumed;
+                currentRoomData[roomIndex].consumed_by = data.consumed_by;
+                currentRoomData[roomIndex].consumed_at = data.consumed ? new Date().toISOString() : null;
+                
+                applyFilters(); // Refresh the display
+                updateStats();
+                
+                const status = data.consumed ? 'consumed' : 'reset';
+                showToast(`Room ${data.room_number} breakfast ${status}`, 'success');
+            }
+        }
+
+        function updateConnectionStatus(status) {
+            const statusElement = document.getElementById('connectionStatus');
+            statusElement.className = `connection-status ${status}`;
+            
+            switch (status) {
+                case 'connected':
+                    statusElement.innerHTML = '🟢 Connected';
+                    break;
+                case 'connecting':
+                    statusElement.innerHTML = '🟡 Connecting...';
+                    break;
+                case 'disconnected':
+                    statusElement.innerHTML = '🔴 Disconnected';
+                    break;
+            }
+        }
+
+        // Theme management
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('hudini-theme') || 'light';
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+                document.querySelector('.theme-toggle').innerHTML = '☀️';
+            }
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            const themeToggle = document.querySelector('.theme-toggle');
+            
+            if (body.classList.contains('dark-mode')) {
+                body.classList.remove('dark-mode');
+                themeToggle.innerHTML = '🌙';
+                localStorage.setItem('hudini-theme', 'light');
+            } else {
+                body.classList.add('dark-mode');
+                themeToggle.innerHTML = '☀️';
+                localStorage.setItem('hudini-theme', 'dark');
+            }
+        }
+
+        // Enhanced offline storage capabilities
+        class OfflineManager {
+            constructor() {
+                this.dbName = 'HudiniOfflineDB';
+                this.dbVersion = 1;
+                this.db = null;
+                this.initDB();
+            }
+
+            async initDB() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open(this.dbName, this.dbVersion);
+                    
+                    request.onerror = () => reject(request.error);
+                    request.onsuccess = () => {
+                        this.db = request.result;
+                        resolve(this.db);
+                    };
+                    
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+                        
+                        // Store offline actions
+                        if (!db.objectStoreNames.contains('offlineActions')) {
+                            const actionStore = db.createObjectStore('offlineActions', { 
+                                keyPath: 'id', 
+                                autoIncrement: true 
+                            });
+                            actionStore.createIndex('timestamp', 'timestamp', { unique: false });
+                            actionStore.createIndex('type', 'type', { unique: false });
+                        }
+                        
+                        // Store cached room data
+                        if (!db.objectStoreNames.contains('roomData')) {
+                            const roomStore = db.createObjectStore('roomData', { 
+                                keyPath: 'room_number' 
+                            });
+                            roomStore.createIndex('property_id', 'property_id', { unique: false });
+                        }
+                    };
+                });
+            }
+
+            async saveOfflineAction(action) {
+                if (!this.db) await this.initDB();
+                
+                const transaction = this.db.transaction(['offlineActions'], 'readwrite');
+                const store = transaction.objectStore('offlineActions');
+                
+                const actionWithTimestamp = {
+                    ...action,
+                    timestamp: Date.now(),
+                    synced: false
+                };
+                
+                return store.add(actionWithTimestamp);
+            }
+
+            async cacheRoomData(rooms) {
+                if (!this.db) await this.initDB();
+                
+                const transaction = this.db.transaction(['roomData'], 'readwrite');
+                const store = transaction.objectStore('roomData');
+                
+                // Clear old data
+                await store.clear();
+                
+                // Add new data
+                rooms.forEach(room => {
+                    store.add({
+                        ...room,
+                        cached_at: Date.now()
+                    });
+                });
+            }
+
+            async getCachedRoomData() {
+                if (!this.db) await this.initDB();
+                
+                const transaction = this.db.transaction(['roomData'], 'readonly');
+                const store = transaction.objectStore('roomData');
+                
+                return new Promise((resolve, reject) => {
+                    const request = store.getAll();
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            }
+
+            async getPendingActions() {
+                if (!this.db) await this.initDB();
+                
+                const transaction = this.db.transaction(['offlineActions'], 'readonly');
+                const store = transaction.objectStore('offlineActions');
+                
+                return new Promise((resolve, reject) => {
+                    const request = store.getAll();
+                    request.onsuccess = () => {
+                        const actions = request.result.filter(action => !action.synced);
+                        resolve(actions);
+                    };
+                    request.onerror = () => reject(request.error);
+                });
+            }
+
+            async markActionSynced(actionId) {
+                if (!this.db) await this.initDB();
+                
+                const transaction = this.db.transaction(['offlineActions'], 'readwrite');
+                const store = transaction.objectStore('offlineActions');
+                
+                const request = store.get(actionId);
+                request.onsuccess = () => {
+                    const action = request.result;
+                    if (action) {
+                        action.synced = true;
+                        store.put(action);
+                    }
+                };
+            }
+        }
+
+        // Initialize offline manager
+        const offlineManager = new OfflineManager();
+
+        // Enhanced data fetching with offline support
+        async function refreshData() {
+            showLoading();
+            
+            try {
+                // Check if online
+                if (navigator.onLine && websocket && websocket.readyState === WebSocket.OPEN) {
+                    // Fetch fresh data from API
+                    await fetchFromAPI();
+                } else {
+                    // Load from cache
+                    await loadFromCache();
+                }
+            } catch (error) {
+                console.error('Error refreshing data:', error);
+                await loadFromCache();
+                showToast('Loaded from offline cache', 'warning');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function fetchFromAPI() {
+            const selectedDate = document.getElementById('selectedDate').value;
+            const apiUrl = `${API_BASE_URL}/room-grid/${PROPERTY_ID}?date=${selectedDate}`;
+            
+            try {
+                const response = await fetch(apiUrl, {
+                    headers: JWT_TOKEN ? { 'Authorization': `Bearer ${JWT_TOKEN}` } : {}
+                });
+
+                if (response.ok) {
+                    const apiData = await response.json();
+                    const transformedData = transformAPIData(apiData);
+                    currentRoomData = transformedData;
+                    
+                    // Cache the data
+                    await offlineManager.cacheRoomData(transformedData);
+                    
+                    // Sync pending offline actions
+                    await syncOfflineActions();
+                    
+                    showSuccess('Connected to live data');
+                } else {
+                    throw new Error(`API responded with status: ${response.status}`);
+                }
+            } catch (error) {
+                console.error('API fetch failed:', error);
+                throw error;
+            }
+            
+            applyFilters();
+            updateStats();
+        }
+
+        async function loadFromCache() {
+            try {
+                const cachedData = await offlineManager.getCachedRoomData();
+                if (cachedData && cachedData.length > 0) {
+                    currentRoomData = cachedData;
+                    applyFilters();
+                    updateStats();
+                    showToast('Using offline data', 'info');
+                } else {
+                    // No cached data, generate demo data
+                    const demoData = generateMockRoomData();
+                    currentRoomData = demoData;
+                    applyFilters();
+                    updateStats();
+                    showToast('Using demo data - no cached data available', 'warning');
+                }
+            } catch (error) {
+                console.error('Error loading cached data:', error);
+                // Fallback to demo data
+                const demoData = generateMockRoomData();
+                currentRoomData = demoData;
+                applyFilters();
+                updateStats();
+                showToast('Using demo data - cache unavailable', 'error');
+            }
+        }
+
+        // Enhanced breakfast consumption with offline support
+        async function markBreakfastConsumed() {
+            if (!selectedRoom) return;
+
+            const action = {
+                type: 'mark_consumed',
+                room_number: selectedRoom.room_number,
+                property_id: PROPERTY_ID,
+                payment_method: 'room_charge',
+                notes: 'Breakfast consumed via web interface',
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                if (navigator.onLine && JWT_TOKEN) {
+                    // Try to send to server immediately
+                    const response = await fetch(`${API_BASE_URL}/rooms/${selectedRoom.room_number}/consume?property_id=${PROPERTY_ID}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${JWT_TOKEN}`
+                        },
+                        body: JSON.stringify(action)
+                    });
+
+                    if (response.ok) {
+                        // Update local data
+                        selectedRoom.consumed_today = true;
+                        selectedRoom.consumed_at = action.timestamp;
+                        selectedRoom.consumed_by = 'Web Interface';
+                        
+                        showToast('Breakfast marked as consumed', 'success');
+                        closeModal();
+                        applyFilters();
+                        return;
+                    }
+                }
+                
+                // If we get here, either offline or API failed
+                // Save for later sync
+                await offlineManager.saveOfflineAction(action);
+                
+                // Update local data optimistically
+                selectedRoom.consumed_today = true;
+                selectedRoom.consumed_at = action.timestamp;
+                selectedRoom.consumed_by = 'Web Interface (Offline)';
+                
+                showToast('Breakfast marked as consumed (will sync when online)', 'warning');
+                closeModal();
+                applyFilters();
+                
+            } catch (error) {
+                console.error('Error marking consumed:', error);
+                
+                // Save offline action
+                await offlineManager.saveOfflineAction(action);
+                
+                // Update local data
+                selectedRoom.consumed_today = true;
+                selectedRoom.consumed_at = action.timestamp;
+                selectedRoom.consumed_by = 'Web Interface (Offline)';
+                
+                showToast('Saved offline - will sync when connected', 'warning');
+                closeModal();
+                applyFilters();
+            }
+        }
+
+        // Sync offline actions when connection is restored
+        async function syncOfflineActions() {
+            try {
+                const pendingActions = await offlineManager.getPendingActions();
+                
+                if (pendingActions.length === 0) return;
+                
+                showToast(`Syncing ${pendingActions.length} offline actions...`, 'info');
+                
+                for (const action of pendingActions) {
+                    try {
+                        let response;
+                        
+                        switch (action.type) {
+                            case 'mark_consumed':
+                                response = await fetch(`${API_BASE_URL}/rooms/${action.room_number}/consume?property_id=${action.property_id}`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': `Bearer ${JWT_TOKEN}`
+                                    },
+                                    body: JSON.stringify(action)
+                                });
+                                break;
+                            // Add other action types as needed
+                        }
+                        
+                        if (response && response.ok) {
+                            await offlineManager.markActionSynced(action.id);
+                        }
+                    } catch (error) {
+                        console.error(`Failed to sync action ${action.id}:`, error);
+                    }
+                }
+                
+                showToast('Offline actions synced successfully', 'success');
+            } catch (error) {
+                console.error('Error syncing offline actions:', error);
+            }
+        }
+
+        // Network status monitoring
+        window.addEventListener('online', async () => {
+            showToast('Connection restored', 'success');
+            updateConnectionStatus('connecting');
+            connectWebSocket();
+            await refreshData();
+        });
+
+        window.addEventListener('offline', () => {
+            showToast('Working offline', 'warning');
+            updateConnectionStatus('disconnected');
+        });
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 'r':
+                        e.preventDefault();
+                        refreshData();
+                        break;
+                    case 'f':
+                        e.preventDefault();
+                        document.getElementById('searchInput').focus();
+                        break;
+                    case 'b':
+                        e.preventDefault();
+                        toggleBulkMode();
+                        break;
+                }
+            }
+            if (e.key === 'Escape') {
+                closeModal();
+                if (bulkModeActive) {
+                    toggleBulkMode();
+                }
+            }
+        }
+
+        // Search and filter functionality
+        function applyFilters() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const floorFilter = document.getElementById('floorFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            
+            filteredRoomData = currentRoomData.filter(room => {
+                // Search filter
+                const matchesSearch = !searchTerm || 
+                    room.room_number.toLowerCase().includes(searchTerm) ||
+                    room.guest_name.toLowerCase().includes(searchTerm) ||
+                    room.room_type.toLowerCase().includes(searchTerm);
+                
+                // Floor filter
+                const matchesFloor = !floorFilter || room.floor.toString() === floorFilter;
+                
+                // Status filter
+                const matchesStatus = !statusFilter || 
+                    (statusFilter === 'vacant' && !room.has_guest) ||
+                    (statusFilter === 'occupied' && room.has_guest && !room.breakfast_package) ||
+                    (statusFilter === 'with-breakfast' && room.has_guest && room.breakfast_package && !room.consumed_today) ||
+                    (statusFilter === 'consumed' && room.consumed_today) ||
+                    (statusFilter === 'maintenance' && room.status === 'maintenance');
+                
+                return matchesSearch && matchesFloor && matchesStatus;
+            });
+            
+            renderRoomGrid();
+            updateStats();
+        }
+
+        // Bulk operations
+        function toggleBulkMode() {
+            bulkModeActive = !bulkModeActive;
+            const btn = document.getElementById('bulkModeBtn');
+            const panel = document.getElementById('bulkActionsPanel');
+            
+            if (bulkModeActive) {
+                btn.textContent = '❌ Exit Bulk Mode';
+                btn.classList.add('btn-warning');
+                btn.classList.remove('btn-secondary');
+                panel.style.display = 'block';
+                showToast('Bulk mode activated. Click rooms to select them.', 'info');
+            } else {
+                btn.textContent = '📋 Bulk Actions';
+                btn.classList.add('btn-secondary');
+                btn.classList.remove('btn-warning');
+                panel.style.display = 'none';
+                clearSelection();
+                showToast('Bulk mode deactivated.', 'info');
+            }
+            
+            renderRoomGrid();
+        }
+
+        function toggleRoomSelection(roomNumber) {
+            if (!bulkModeActive) return;
+            
+            if (selectedRooms.has(roomNumber)) {
+                selectedRooms.delete(roomNumber);
+            } else {
+                selectedRooms.add(roomNumber);
+            }
+            
+            updateSelectedCount();
+            renderRoomGrid();
+        }
+
+        function updateSelectedCount() {
+            const count = selectedRooms.size;
+            document.getElementById('selectedCount').textContent = `${count} room${count !== 1 ? 's' : ''} selected`;
+        }
+
+        function clearSelection() {
+            selectedRooms.clear();
+            updateSelectedCount();
+            renderRoomGrid();
+        }
+
+        // Toast notifications
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 20px;
+                border-radius: 5px;
+                color: white;
+                font-weight: bold;
+                z-index: 10000;
+                animation: slideIn 0.3s ease-out;
+            `;
+            
+            const colors = {
+                info: '#17a2b8',
+                success: '#28a745',
+                warning: '#ffc107',
+                error: '#dc3545'
+            };
+            
+            toast.style.backgroundColor = colors[type] || colors.info;
+            toast.textContent = message;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease-in';
+                setTimeout(() => document.body.removeChild(toast), 300);
+            }, 3000);
+        }
+
+        // Get a fresh JWT token
+        async function getAuthToken() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'test@hotel.com',
+                        password: 'password123'
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    JWT_TOKEN = data.token;
+                    console.log('Authentication successful');
+                    return JWT_TOKEN;
+                }
+            } catch (error) {
+                console.warn('Authentication failed:', error);
+            }
+            return null;
+        }
+
+        async function refreshData() {
+            showLoading();
+            try {
+                console.log('Refreshing room data...');
+                
+                // Try to get authentication token first
+                if (!JWT_TOKEN) {
+                    JWT_TOKEN = await getAuthToken();
+                }
+                
+                // Try to fetch real data from API first
+                if (JWT_TOKEN) {
+                    try {
+                        console.log('Fetching data from API...');
+                        const response = await fetch(`${API_BASE_URL}/rooms/breakfast-status?property_id=${PROPERTY_ID}`, {
+                            method: 'GET',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${JWT_TOKEN}`
+                            }
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            console.log('API Response:', data);
+                            
+                            // Transform API data to match our room grid format
+                            currentRoomData = transformAPIData(data.rooms || []);
+                            renderRoomGrid();
+                            updateStats();
+                            hideLoading();
+                            showSuccess('Connected to live database - ' + currentRoomData.length + ' rooms loaded');
+                            return;
+                        } else if (response.status === 401) {
+                            // Token expired, try to get a new one
+                            JWT_TOKEN = await getAuthToken();
+                            if (JWT_TOKEN) {
+                                return refreshData(); // Retry with new token
+                            }
+                        } else {
+                            console.warn('API call failed, falling back to demo data:', response.status, response.statusText);
+                        }
+                    } catch (apiError) {
+                        console.warn('API call error, falling back to demo data:', apiError);
+                    }
+                }
+                
+                // Fallback to demo data if API fails or no token
+                console.log('Using demo data for demonstration');
+                showWarning('Using demo data - server may not be running or accessible from file:// URL');
+                const mockData = generateMockRoomData();
+                currentRoomData = mockData;
+                renderRoomGrid();
+                updateStats();
+            } catch (error) {
+                console.error('Error fetching room data:', error);
+                showError('Failed to load room data: ' + error.message);
+                // Still show demo data even on error
+                const mockData = generateMockRoomData();
+                currentRoomData = mockData;
+                renderRoomGrid();
+                updateStats();
+            }
+            hideLoading();
+        }
+
+        // Transform API response to match our room grid format
+        function transformAPIData(apiRooms) {
+            return apiRooms.map(room => ({
+                room_number: room.room_number,
+                floor: room.floor,
+                room_type: room.room_type || 'standard',
+                status: room.status || 'available',
+                has_guest: room.has_guest || false,
+                guest_name: room.guest_name || '',
+                breakfast_package: room.breakfast_package || false,
+                breakfast_count: room.breakfast_count || 0,
+                consumed_today: room.consumed_today || false,
+                consumed_at: room.consumed_at || null,
+                consumed_by: room.consumed_by || '',
+                check_in_date: room.check_in_date || null,
+                check_out_date: room.check_out_date || null
+            }));
+        }
+
+        function generateMockRoomData() {
+            const rooms = [];
+            const guestNames = [
+                'James Hernandez', 'Paul Lopez', 'Paul Anderson', 'Alex Brown', 
+                'Nina Rodriguez', 'Anna Anderson', 'Nina Brown', 'John Gonzalez',
+                'Paul Rodriguez', 'Maria Garcia', 'David Wilson', 'Sarah Johnson',
+                'Michael Smith', 'Lisa Davis', 'Robert Taylor', 'Emma Martinez'
+            ];
+            
+            // Generate 5 floors with 10 rooms each
+            for (let floor = 1; floor <= 5; floor++) {
+                for (let room = 1; room <= 10; room++) {
+                    const roomNumber = `${floor}${room.toString().padStart(2, '0')}`;
+                    const roomTypes = ['standard', 'deluxe', 'suite', 'presidential'];
+                    const statuses = ['available', 'occupied', 'maintenance', 'out_of_order'];
+                    
+                    // Create room status based on realistic scenarios
+                    const isOccupied = Math.random() > 0.4; // 60% occupancy
+                    const hasBreakfast = isOccupied && Math.random() > 0.3; // 70% of occupied rooms have breakfast
+                    const isConsumed = hasBreakfast && Math.random() > 0.6; // 40% have consumed breakfast
+                    
+                    let status = 'available';
+                    if (roomNumber === '104' || roomNumber === '107' || roomNumber === '108' || roomNumber === '110') {
+                        status = 'out_of_order';
+                    } else if (roomNumber === '106' || roomNumber === '109') {
+                        status = 'maintenance';
+                    } else if (isOccupied) {
+                        status = 'occupied';
+                    }
+                    
+                    const room = {
+                        room_number: roomNumber,
+                        floor: floor,
+                        room_type: roomTypes[Math.floor(Math.random() * roomTypes.length)],
+                        status: status,
+                        has_guest: status === 'occupied',
+                        guest_name: status === 'occupied' ? guestNames[Math.floor(Math.random() * guestNames.length)] : '',
+                        breakfast_package: status === 'occupied' ? hasBreakfast : false,
+                        breakfast_count: hasBreakfast ? Math.floor(Math.random() * 3) + 1 : 0,
+                        consumed_today: hasBreakfast ? isConsumed : false,
+                        consumed_at: isConsumed ? new Date().toISOString() : null,
+                        consumed_by: isConsumed ? 'Test Staff' : '',
+                        check_in_date: status === 'occupied' ? new Date().toISOString() : null,
+                        check_out_date: status === 'occupied' ? new Date(Date.now() + 86400000 * Math.floor(Math.random() * 5 + 1)).toISOString() : null
+                    };
+                    
+                    rooms.push(room);
+                }
+            }
+            
+            return rooms;
+        }
+
+        function showLoading() {
+            document.getElementById('loadingIndicator').style.display = 'block';
+            document.getElementById('roomGrid').style.display = 'none';
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingIndicator').style.display = 'none';
+            document.getElementById('roomGrid').style.display = 'block';
+        }
+
+        function showError(message) {
+            const roomGrid = document.getElementById('roomGrid');
+            roomGrid.innerHTML = `
+                <div style="text-align: center; padding: 50px; color: #dc3545;">
+                    <h3>⚠️ Error</h3>
+                    <p>${message}</p>
+                    <button class="btn btn-primary" onclick="refreshData()">Retry</button>
+                </div>
+            `;
+        }
+
+        function showWarning(message) {
+            const statusDiv = document.getElementById('connectionStatus') || createStatusDiv();
+            statusDiv.innerHTML = `
+                <div style="background: #fff3cd; color: #856404; padding: 10px; border-radius: 5px; margin: 10px 0; border: 1px solid #ffeaa7;">
+                    ⚠️ ${message}
+                </div>
+            `;
+        }
+
+        function showSuccess(message) {
+            const statusDiv = document.getElementById('connectionStatus') || createStatusDiv();
+            statusDiv.innerHTML = `
+                <div style="background: #d4edda; color: #155724; padding: 10px; border-radius: 5px; margin: 10px 0; border: 1px solid #c3e6cb;">
+                    ✅ ${message}
+                </div>
+            `;
+        }
+
+        function createStatusDiv() {
+            const statusDiv = document.createElement('div');
+            statusDiv.id = 'connectionStatus';
+            const container = document.querySelector('.room-grid-container');
+            container.insertBefore(statusDiv, container.firstChild);
+            return statusDiv;
+        }
+
+        function renderRoomGrid() {
+            const roomGrid = document.getElementById('roomGrid');
+            
+            // Use filtered data if available, otherwise use all data
+            const dataToRender = filteredRoomData.length > 0 || document.getElementById('searchInput').value || 
+                               document.getElementById('floorFilter').value || document.getElementById('statusFilter').value 
+                               ? filteredRoomData : currentRoomData;
+            
+            if (dataToRender.length === 0) {
+                roomGrid.innerHTML = `
+                    <div style="text-align: center; padding: 50px; color: #666;">
+                        <h3>No rooms match your filters</h3>
+                        <p>Try adjusting your search criteria or clearing filters.</p>
+                        <button onclick="clearAllFilters()" class="btn btn-primary">Clear All Filters</button>
+                    </div>
+                `;
+                return;
+            }
+
+            // Group rooms by floor
+            const roomsByFloor = {};
+            dataToRender.forEach(room => {
+                const floor = room.floor || 1;
+                if (!roomsByFloor[floor]) {
+                    roomsByFloor[floor] = [];
+                }
+                roomsByFloor[floor].push(room);
+            });
+
+            // Sort floors and rooms
+            const sortedFloors = Object.keys(roomsByFloor).sort((a, b) => parseInt(b) - parseInt(a));
+            
+            let html = '';
+            sortedFloors.forEach(floor => {
+                const rooms = roomsByFloor[floor].sort((a, b) => a.room_number.localeCompare(b.room_number, undefined, { numeric: true }));
+                
+                html += `
+                    <div class="floor-section">
+                        <h3 style="margin: 20px 0 10px 0; color: #333; font-size: 18px;">
+                            🏢 Floor ${floor} (${rooms.length} rooms)
+                        </h3>
+                        <div class="rooms-grid">
+                `;
+                
+                rooms.forEach(room => {
+                    const status = getRoomStatusClass(room);
+                    const isSelected = selectedRooms.has(room.room_number);
+                    const selectionClass = isSelected ? 'room-selected' : '';
+                    const bulkModeClass = bulkModeActive ? 'bulk-mode' : '';
+                    
+                    html += `
+                        <div class="room-card ${status} ${selectionClass} ${bulkModeClass}" 
+                             onclick="${bulkModeActive ? `toggleRoomSelection('${room.room_number}')` : `openRoomDetails('${room.room_number}')`}"
+                             data-room="${room.room_number}">
+                            <div class="room-number">${room.room_number}</div>
+                            ${room.has_guest ? `<div class="guest-name">${room.guest_name}</div>` : ''}
+                            <div class="room-status">${getRoomStatusText(room)}</div>
+                            ${isSelected ? '<div class="selection-indicator">✓</div>' : ''}
+                        </div>
+                    `;
+                });
+                
+                html += `
+                        </div>
+                    </div>
+                `;
+            });
+
+            roomGrid.innerHTML = html;
+        }
+
+        // Bulk operations
+        async function markSelectedConsumed() {
+            if (selectedRooms.size === 0) {
+                showToast('No rooms selected', 'warning');
+                return;
+            }
+            
+            const confirmed = confirm(`Mark breakfast as consumed for ${selectedRooms.size} selected rooms?`);
+            if (!confirmed) return;
+            
+            let successCount = 0;
+            let errorCount = 0;
+            
+            for (const roomNumber of selectedRooms) {
+                try {
+                    if (JWT_TOKEN) {
+                        const response = await fetch(`${API_BASE_URL}/rooms/${roomNumber}/consume?property_id=${PROPERTY_ID}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${JWT_TOKEN}`
+                            },
+                            body: JSON.stringify({
+                                payment_method: 'room_charge',
+                                notes: 'Bulk operation via web dashboard'
+                            })
+                        });
+                        
+                        if (response.ok) {
+                            successCount++;
+                        } else {
+                            errorCount++;
+                        }
+                    } else {
+                        // Demo mode - update local data
+                        const roomIndex = currentRoomData.findIndex(room => room.room_number === roomNumber);
+                        if (roomIndex !== -1 && currentRoomData[roomIndex].breakfast_package) {
+                            currentRoomData[roomIndex].consumed_today = true;
+                            currentRoomData[roomIndex].consumed_at = new Date().toISOString();
+                            currentRoomData[roomIndex].consumed_by = 'Bulk Operation';
+                            successCount++;
+                        }
+                    }
+                } catch (error) {
+                    console.error(`Error marking room ${roomNumber}:`, error);
+                    errorCount++;
+                }
+            }
+            
+            clearSelection();
+            toggleBulkMode();
+            
+            if (JWT_TOKEN) {
+                refreshData();
+            } else {
+                applyFilters();
+            }
+            
+            const message = `Bulk operation completed: ${successCount} successful, ${errorCount} failed`;
+            showToast(message, errorCount > 0 ? 'warning' : 'success');
+        }
+
+        async function markSelectedMaintenance() {
+            if (selectedRooms.size === 0) {
+                showToast('No rooms selected', 'warning');
+                return;
+            }
+            
+            const confirmed = confirm(`Mark ${selectedRooms.size} selected rooms for maintenance?`);
+            if (!confirmed) return;
+            
+            // Update local data (in a real system, this would call an API)
+            selectedRooms.forEach(roomNumber => {
+                const roomIndex = currentRoomData.findIndex(room => room.room_number === roomNumber);
+                if (roomIndex !== -1) {
+                    currentRoomData[roomIndex].status = 'maintenance';
+                }
+            });
+            
+            clearSelection();
+            toggleBulkMode();
+            applyFilters();
+            
+            showToast(`${selectedRooms.size} rooms marked for maintenance`, 'success');
+        }
+
+        // Export functionality
+        function exportData() {
+            const dataToExport = filteredRoomData.length > 0 ? filteredRoomData : currentRoomData;
+            
+            // Create CSV content
+            const headers = ['Room Number', 'Floor', 'Room Type', 'Status', 'Has Guest', 'Guest Name', 'Breakfast Package', 'Consumed Today', 'Check In', 'Check Out'];
+            const csvContent = [
+                headers.join(','),
+                ...dataToExport.map(room => [
+                    room.room_number,
+                    room.floor,
+                    room.room_type,
+                    room.status,
+                    room.has_guest ? 'Yes' : 'No',
+                    `"${room.guest_name || ''}"`,
+                    room.breakfast_package ? 'Yes' : 'No',
+                    room.consumed_today ? 'Yes' : 'No',
+                    room.check_in_date || '',
+                    room.check_out_date || ''
+                ].join(','))
+            ].join('\n');
+            
+            // Download CSV
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `room-status-${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            showToast(`Exported ${dataToExport.length} rooms to CSV`, 'success');
+        }
+            
+            let html = '';
+            sortedFloors.forEach(floor => {
+                const rooms = roomsByFloor[floor].sort((a, b) => a.room_number.localeCompare(b.room_number, undefined, { numeric: true }));
+                
+                html += `
+                    <div class="floor-section">
+                        <div class="floor-header">Floor ${floor}</div>
+                        <div class="rooms-grid">
+                            ${rooms.map(room => renderRoomCard(room)).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+
+            roomGrid.innerHTML = html;
+        }
+
+        function renderRoomCard(room) {
+            const statusClass = getRoomStatusClass(room);
+            const statusText = getRoomStatusText(room);
+            
+            return `
+                <div class="room-card ${statusClass}" onclick="openRoomModal('${room.room_number}')">
+                    <div class="room-number">${room.room_number}</div>
+                    <div class="room-status">${statusText}</div>
+                    ${room.breakfast_package ? '<div class="breakfast-indicator' + (room.consumed_today ? ' consumed-indicator' : '') + '"></div>' : ''}
+                    ${room.has_guest ? `<div class="guest-info">${room.guest_name}</div>` : ''}
+                </div>
+            `;
+        }
+
+        function getRoomStatusClass(room) {
+            if (room.status === 'maintenance') return 'room-maintenance';
+            if (room.status === 'out_of_order') return 'room-out-of-order';
+            if (!room.has_guest) return 'room-vacant';
+            if (room.consumed_today) return 'room-consumed';
+            if (room.breakfast_package) return 'room-occupied-breakfast';
+            return 'room-occupied';
+        }
+
+        function getRoomStatusText(room) {
+            if (room.status === 'maintenance') return 'Maintenance';
+            if (room.status === 'out_of_order') return 'Out of Order';
+            if (!room.has_guest) return 'Vacant';
+            if (room.consumed_today) return 'Consumed';
+            if (room.breakfast_package) return 'Breakfast';
+            return 'Occupied';
+        }
+
+        function updateStats() {
+            const totalRooms = currentRoomData.length;
+            const occupiedRooms = currentRoomData.filter(room => room.has_guest).length;
+            const breakfastPackages = currentRoomData.filter(room => room.breakfast_package).length;
+            const consumedToday = currentRoomData.filter(room => room.consumed_today).length;
+            const pendingConsumption = currentRoomData.filter(room => room.breakfast_package && !room.consumed_today).length;
+
+            document.getElementById('totalRooms').textContent = totalRooms;
+            document.getElementById('occupiedRooms').textContent = occupiedRooms;
+            document.getElementById('breakfastPackages').textContent = breakfastPackages;
+            document.getElementById('consumedToday').textContent = consumedToday;
+            document.getElementById('pendingConsumption').textContent = pendingConsumption;
+        }
+
+        function openRoomModal(roomNumber) {
+            selectedRoom = currentRoomData.find(room => room.room_number === roomNumber);
+            if (!selectedRoom) return;
+
+            // Populate modal with room data
+            document.getElementById('modalTitle').textContent = `Room ${roomNumber} Details`;
+            document.getElementById('modalRoomNumber').textContent = roomNumber;
+            document.getElementById('modalFloor').textContent = selectedRoom.floor || 'N/A';
+            document.getElementById('modalRoomType').textContent = selectedRoom.room_type || 'Standard';
+            document.getElementById('modalStatus').textContent = selectedRoom.status || 'Available';
+
+            const guestSection = document.getElementById('guestSection');
+            const markConsumedBtn = document.getElementById('markConsumedBtn');
+
+            if (selectedRoom.has_guest) {
+                guestSection.style.display = 'block';
+                document.getElementById('modalGuestName').textContent = selectedRoom.guest_name || 'N/A';
+                document.getElementById('modalCheckIn').textContent = selectedRoom.check_in_date ? new Date(selectedRoom.check_in_date).toLocaleDateString() : 'N/A';
+                document.getElementById('modalCheckOut').textContent = selectedRoom.check_out_date ? new Date(selectedRoom.check_out_date).toLocaleDateString() : 'N/A';
+                document.getElementById('modalBreakfastPackage').textContent = selectedRoom.breakfast_package ? 'Yes' : 'No';
+                document.getElementById('modalBreakfastCount').textContent = selectedRoom.breakfast_count || 0;
+                document.getElementById('modalConsumedToday').textContent = selectedRoom.consumed_today ? 'Yes' : 'No';
+
+                const consumptionDetails = document.getElementById('consumptionDetails');
+                if (selectedRoom.consumed_today) {
+                    consumptionDetails.style.display = 'block';
+                    document.getElementById('modalConsumedAt').textContent = selectedRoom.consumed_at ? new Date(selectedRoom.consumed_at).toLocaleString() : 'N/A';
+                    document.getElementById('modalConsumedBy').textContent = selectedRoom.consumed_by || 'N/A';
+                    markConsumedBtn.style.display = 'none';
+                } else {
+                    consumptionDetails.style.display = 'none';
+                    markConsumedBtn.style.display = selectedRoom.breakfast_package ? 'inline-block' : 'none';
+                }
+            } else {
+                guestSection.style.display = 'none';
+                markConsumedBtn.style.display = 'none';
+            }
+
+            document.getElementById('roomModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('roomModal').style.display = 'none';
+            selectedRoom = null;
+        }
+
+        async function markBreakfastConsumed() {
+            if (!selectedRoom) return;
+
+            try {
+                // Try to use real API first
+                if (JWT_TOKEN) {
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/rooms/${selectedRoom.room_number}/consume?property_id=${PROPERTY_ID}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${JWT_TOKEN}`
+                            },
+                            body: JSON.stringify({
+                                payment_method: 'room_charge',
+                                notes: 'Marked via web dashboard'
+                            })
+                        });
+
+                        if (response.ok) {
+                            const result = await response.json();
+                            alert(`Breakfast marked as consumed for room ${selectedRoom.room_number}`);
+                            closeModal();
+                            refreshData(); // Refresh to get updated data
+                            return;
+                        } else {
+                            console.warn('API call failed, using demo mode:', response.status, response.statusText);
+                        }
+                    } catch (apiError) {
+                        console.warn('API error, using demo mode:', apiError);
+                    }
+                }
+
+                // Fallback to demo mode
+                const roomIndex = currentRoomData.findIndex(room => room.room_number === selectedRoom.room_number);
+                if (roomIndex !== -1) {
+                    currentRoomData[roomIndex].consumed_today = true;
+                    currentRoomData[roomIndex].consumed_at = new Date().toISOString();
+                    currentRoomData[roomIndex].consumed_by = 'Demo Staff';
+                }
+
+                alert(`Demo: Breakfast marked as consumed for room ${selectedRoom.room_number}\n\nIn production, this would:\n- Update the database\n- Send to PMS for billing\n- Generate consumption record\n- Update analytics`);
+                closeModal();
+                renderRoomGrid();
+                updateStats();
+            } catch (error) {
+                console.error('Error marking breakfast consumed:', error);
+                alert('Failed to mark breakfast as consumed. Please try again.');
+            }
+        }
+
+        async function syncFromPMS() {
+            try {
+                // For demo purposes, simulate a sync operation
+                alert('Demo: Successfully synced data from PMS\n\nIn production, this would:\n- Connect to your Property Management System\n- Update guest information\n- Refresh breakfast package assignments\n- Update room statuses');
+                refreshData();
+            } catch (error) {
+                console.error('Error syncing from PMS:', error);
+                alert('Failed to sync from PMS. Please try again.');
+            }
+        }
+
+        function viewRoomHistory() {
+            if (!selectedRoom) return;
+            // This would open a history modal or navigate to a history page
+            alert(`Room ${selectedRoom.room_number} history feature coming soon!`);
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('roomModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+
+        // Add missing filter and bulk operation functions
+        function clearAllFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('floorFilter').value = '';
+            document.getElementById('statusFilter').value = '';
+            applyFilters();
+        }
+
+        // Bulk operations
+        async function markSelectedConsumed() {
+            if (selectedRooms.size === 0) {
+                showToast('No rooms selected', 'warning');
+                return;
+            }
+            
+            const confirmed = confirm(`Mark breakfast as consumed for ${selectedRooms.size} selected rooms?`);
+            if (!confirmed) return;
+            
+            let successCount = 0;
+            let errorCount = 0;
+            
+            for (const roomNumber of selectedRooms) {
+                try {
+                    if (JWT_TOKEN) {
+                        const response = await fetch(`${API_BASE_URL}/rooms/${roomNumber}/consume?property_id=${PROPERTY_ID}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${JWT_TOKEN}`
+                            },
+                            body: JSON.stringify({
+                                payment_method: 'room_charge',
+                                notes: 'Bulk operation via web dashboard'
+                            })
+                        });
+                        
+                        if (response.ok) {
+                            successCount++;
+                        } else {
+                            errorCount++;
+                        }
+                    } else {
+                        // Demo mode - update local data
+                        const roomIndex = currentRoomData.findIndex(room => room.room_number === roomNumber);
+                        if (roomIndex !== -1 && currentRoomData[roomIndex].breakfast_package) {
+                            currentRoomData[roomIndex].consumed_today = true;
+                            currentRoomData[roomIndex].consumed_at = new Date().toISOString();
+                            currentRoomData[roomIndex].consumed_by = 'Bulk Operation';
+                            successCount++;
+                        }
+                    }
+                } catch (error) {
+                    console.error(`Error marking room ${roomNumber}:`, error);
+                    errorCount++;
+                }
+            }
+            
+            clearSelection();
+            toggleBulkMode();
+            
+            if (JWT_TOKEN) {
+                refreshData();
+            } else {
+                applyFilters();
+            }
+            
+            const message = `Bulk operation completed: ${successCount} successful, ${errorCount} failed`;
+            showToast(message, errorCount > 0 ? 'warning' : 'success');
+        }
+
+        async function markSelectedMaintenance() {
+            if (selectedRooms.size === 0) {
+                showToast('No rooms selected', 'warning');
+                return;
+            }
+            
+            const confirmed = confirm(`Mark ${selectedRooms.size} selected rooms for maintenance?`);
+            if (!confirmed) return;
+            
+            // Update local data (in a real system, this would call an API)
+            selectedRooms.forEach(roomNumber => {
+                const roomIndex = currentRoomData.findIndex(room => room.room_number === roomNumber);
+                if (roomIndex !== -1) {
+                    currentRoomData[roomIndex].status = 'maintenance';
+                }
+            });
+            
+            clearSelection();
+            toggleBulkMode();
+            applyFilters();
+            
+            showToast(`${selectedRooms.size} rooms marked for maintenance`, 'success');
+        }
+
+        // Export functionality
+        function exportData() {
+            const dataToExport = filteredRoomData.length > 0 ? filteredRoomData : currentRoomData;
+            
+            // Create CSV content
+            const headers = ['Room Number', 'Floor', 'Room Type', 'Status', 'Has Guest', 'Guest Name', 'Breakfast Package', 'Consumed Today', 'Check In', 'Check Out'];
+            const csvContent = [
+                headers.join(','),
+                ...dataToExport.map(room => [
+                    room.room_number,
+                    room.floor,
+                    room.room_type,
+                    room.status,
+                    room.has_guest ? 'Yes' : 'No',
+                    `"${room.guest_name || ''}"`,
+                    room.breakfast_package ? 'Yes' : 'No',
+                    room.consumed_today ? 'Yes' : 'No',
+                    room.check_in_date || '',
+                    room.check_out_date || ''
+                ].join(','))
+            ].join('\n');
+            
+            // Download CSV
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `room-status-${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            showToast(`Exported ${dataToExport.length} rooms to CSV`, 'success');
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeModal();
+                if (bulkMode) {
+                    toggleBulkMode();
+                }
+            }
+            if (event.key === 'F5' || (event.ctrlKey && event.key === 'r')) {
+                event.preventDefault();
+                refreshData();
+            }
+            if (event.ctrlKey && event.key === 'a' && bulkMode) {
+                event.preventDefault();
+                selectAllRooms();
+            }
+            if (event.ctrlKey && event.key === 'd' && bulkMode) {
+                event.preventDefault();
+                clearSelection();
+            }
+        });
+    </script>
+</body>
+</html>

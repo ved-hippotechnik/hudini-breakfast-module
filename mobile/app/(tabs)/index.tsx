@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   StyleSheet,
   FlatList,
   Alert,
   RefreshControl,
+  ScrollView,
+  Dimensions,
+  TouchableOpacity,
 } from 'react-native';
 import {
   Text,
@@ -16,10 +19,17 @@ import {
   Searchbar,
   Chip,
   Menu,
+  Portal,
+  Modal,
+  Surface,
+  Divider,
 } from 'react-native-paper';
 import { roomGridAPI } from '../../src/services/api';
 import { useAuth } from '../../src/contexts/AuthContext';
-import { RoomBreakfastStatus } from '../../src/types/roomgrid';
+import { RoomBreakfastStatus, APIResponse, MarkConsumptionRequest } from '../../src/types/api';
+
+const { width } = Dimensions.get('window');
+const ROOM_CARD_SIZE = (width - 60) / 4; // 4 rooms per row with margins
 
 export default function RoomGridScreen() {
   const [rooms, setRooms] = useState<RoomBreakfastStatus[]>([]);
@@ -43,9 +53,9 @@ export default function RoomGridScreen() {
 
   useEffect(() => {
     fetchRoomGrid();
-  }, [selectedDate]);
+  }, [fetchRoomGrid]);
 
-  const fetchRoomGrid = async () => {
+  const fetchRoomGrid = useCallback(async () => {
     try {
       setLoading(true);
       const response = await roomGridAPI.getRoomGrid(propertyId, selectedDate);
@@ -56,15 +66,15 @@ export default function RoomGridScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [propertyId, selectedDate]);
 
-  const onRefresh = async () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchRoomGrid();
     setRefreshing(false);
-  };
+  }, [fetchRoomGrid]);
 
-  const syncFromPMS = async () => {
+  const syncFromPMS = useCallback(async () => {
     try {
       setLoading(true);
       await roomGridAPI.syncFromPMS(propertyId);
@@ -76,11 +86,11 @@ export default function RoomGridScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [propertyId, fetchRoomGrid]);
 
-  const markBreakfastConsumed = async (roomNumber: string) => {
+  const markBreakfastConsumed = useCallback(async (roomNumber: string) => {
     try {
-      const data = {
+      const data: MarkConsumptionRequest = {
         property_id: propertyId,
         room_number: roomNumber,
         payment_method: 'room_charge', // Default, could be configurable
@@ -92,48 +102,50 @@ export default function RoomGridScreen() {
       Alert.alert('Success', `Breakfast marked as consumed for room ${roomNumber}`);
     } catch (error: any) {
       console.error('Error marking breakfast consumed:', error);
-      const message = error.response?.data?.error || 'Failed to mark breakfast as consumed';
+      const message = error.response?.data?.error?.message || 'Failed to mark breakfast as consumed';
       Alert.alert('Error', message);
     }
-  };
+  }, [propertyId, user?.first_name, user?.last_name, fetchRoomGrid]);
 
-  const filteredRooms = rooms.filter((room: RoomBreakfastStatus) => {
-    // Search filter
-    if (searchQuery && !room.room_number.toLowerCase().includes(searchQuery.toLowerCase()) && 
-        !room.guest_name?.toLowerCase().includes(searchQuery.toLowerCase())) {
-      return false;
-    }
+  const filteredRooms = useMemo(() => {
+    return rooms.filter((room: RoomBreakfastStatus) => {
+      // Search filter
+      if (searchQuery && !room.room_number.toLowerCase().includes(searchQuery.toLowerCase()) && 
+          !room.guest_name?.toLowerCase().includes(searchQuery.toLowerCase())) {
+        return false;
+      }
 
-    // Status filter
-    switch (filterStatus) {
-      case 'has_breakfast':
-        return room.has_guest && room.breakfast_package;
-      case 'consumed':
-        return room.consumed_today;
-      case 'pending':
-        return room.has_guest && room.breakfast_package && !room.consumed_today;
-      case 'no_guest':
-        return !room.has_guest;
-      default:
-        return true;
-    }
-  });
+      // Status filter
+      switch (filterStatus) {
+        case 'has_breakfast':
+          return room.has_guest && room.breakfast_package;
+        case 'consumed':
+          return room.consumed_today;
+        case 'pending':
+          return room.has_guest && room.breakfast_package && !room.consumed_today;
+        case 'no_guest':
+          return !room.has_guest;
+        default:
+          return true;
+      }
+    });
+  }, [rooms, searchQuery, filterStatus]);
 
-  const getRoomStatusColor = (room: RoomBreakfastStatus) => {
+  const getRoomStatusColor = useCallback((room: RoomBreakfastStatus) => {
     if (!room.has_guest) return '#9E9E9E'; // Gray
     if (!room.breakfast_package) return '#FF9800'; // Orange
     if (room.consumed_today) return '#4CAF50'; // Green
     return '#2196F3'; // Blue
-  };
+  }, []);
 
-  const getRoomStatusText = (room: RoomBreakfastStatus) => {
+  const getRoomStatusText = useCallback((room: RoomBreakfastStatus) => {
     if (!room.has_guest) return 'No Guest';
     if (!room.breakfast_package) return 'No Breakfast Package';
     if (room.consumed_today) return 'Consumed';
     return 'Pending';
-  };
+  }, []);
 
-  const renderRoomCard = ({ item: room }: { item: RoomBreakfastStatus }) => (
+  const renderRoomCard = useCallback(({ item: room }: { item: RoomBreakfastStatus }) => (
     <Card style={[styles.roomCard, { borderLeftColor: getRoomStatusColor(room) }]}>
       <Card.Content>
         <View style={styles.roomHeader}>
@@ -180,7 +192,7 @@ export default function RoomGridScreen() {
         </Card.Actions>
       )}
     </Card>
-  );
+  ), [getRoomStatusColor, getRoomStatusText, markBreakfastConsumed]);
 
   if (loading && !refreshing) {
     return (

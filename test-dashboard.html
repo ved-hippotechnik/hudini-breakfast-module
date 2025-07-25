@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Room Grid Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .room {
+            display: inline-block;
+            width: 80px;
+            height: 60px;
+            margin: 5px;
+            padding: 10px;
+            text-align: center;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .vacant { background-color: #28a745; }
+        .occupied-no-breakfast { background-color: #ffc107; color: black; }
+        .occupied-with-breakfast { background-color: #007bff; }
+        .breakfast-consumed { background-color: #17a2b8; }
+        .maintenance { background-color: #dc3545; }
+        .status-legend {
+            margin: 20px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 18px;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏨 Hotel Room Grid Dashboard - Test Version</h1>
+        
+        <div class="status-legend">
+            <div class="legend-item">
+                <div class="legend-color vacant"></div>
+                <span>Vacant</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color occupied-no-breakfast"></div>
+                <span>Occupied (No Breakfast)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color occupied-with-breakfast"></div>
+                <span>Occupied (With Breakfast)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color breakfast-consumed"></div>
+                <span>Breakfast Consumed</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color maintenance"></div>
+                <span>Maintenance</span>
+            </div>
+        </div>
+
+        <div id="status">
+            <div class="loading">Loading room data...</div>
+        </div>
+
+        <div id="room-grid"></div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8080/api';
+        const PROPERTY_ID = 'HOTEL001';
+        
+        // Test if we can reach the API
+        async function testAPI() {
+            try {
+                console.log('Testing API connection...');
+                const response = await fetch(API_BASE_URL + '/health');
+                console.log('Health check response:', response.status);
+                
+                if (response.ok) {
+                    document.getElementById('status').innerHTML = '<div style="color: green;">✅ Server is running on port 8080</div>';
+                    await loadRoomData();
+                } else {
+                    throw new Error('Server not responding');
+                }
+            } catch (error) {
+                console.error('API test failed:', error);
+                document.getElementById('status').innerHTML = '<div class="error">❌ Cannot connect to server. Please make sure the server is running on port 8080.</div>';
+                showDemoData();
+            }
+        }
+
+        async function loadRoomData() {
+            try {
+                // Get a fresh JWT token
+                const loginResponse = await fetch(API_BASE_URL + '/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'test@hotel.com',
+                        password: 'password123'
+                    })
+                });
+
+                if (!loginResponse.ok) {
+                    throw new Error('Login failed');
+                }
+
+                const loginData = await loginResponse.json();
+                const token = loginData.token;
+
+                // Get room data
+                const roomResponse = await fetch(`${API_BASE_URL}/rooms/breakfast-status?property_id=${PROPERTY_ID}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!roomResponse.ok) {
+                    throw new Error('Failed to get room data');
+                }
+
+                const roomData = await roomResponse.json();
+                console.log('Room data:', roomData);
+                
+                document.getElementById('status').innerHTML = '<div style="color: green;">✅ Connected to database - ' + (roomData.rooms ? roomData.rooms.length : 0) + ' rooms loaded</div>';
+                renderRooms(roomData.rooms || []);
+                
+            } catch (error) {
+                console.error('Error loading room data:', error);
+                document.getElementById('status').innerHTML = '<div class="error">⚠️ Using demo data - ' + error.message + '</div>';
+                showDemoData();
+            }
+        }
+
+        function renderRooms(rooms) {
+            const grid = document.getElementById('room-grid');
+            
+            if (!rooms.length) {
+                grid.innerHTML = '<div class="error">No room data available</div>';
+                return;
+            }
+
+            // Group rooms by floor
+            const floors = {};
+            rooms.forEach(room => {
+                const floor = room.floor || Math.floor(room.room_number / 100);
+                if (!floors[floor]) floors[floor] = [];
+                floors[floor].push(room);
+            });
+
+            let html = '';
+            Object.keys(floors).sort().forEach(floor => {
+                html += `<h3>Floor ${floor}</h3><div style="margin-bottom: 20px;">`;
+                floors[floor].sort((a, b) => a.room_number.localeCompare(b.room_number)).forEach(room => {
+                    const status = getRoomStatus(room);
+                    html += `<div class="room ${status.class}" title="${room.room_number} - ${status.label}">
+                        ${room.room_number}
+                    </div>`;
+                });
+                html += '</div>';
+            });
+
+            grid.innerHTML = html;
+        }
+
+        function getRoomStatus(room) {
+            if (!room.has_guest) {
+                return { class: 'vacant', label: 'Vacant' };
+            }
+            
+            if (room.consumed_today) {
+                return { class: 'breakfast-consumed', label: 'Breakfast Consumed' };
+            }
+            
+            if (room.breakfast_package) {
+                return { class: 'occupied-with-breakfast', label: 'Occupied with Breakfast' };
+            }
+            
+            return { class: 'occupied-no-breakfast', label: 'Occupied (No Breakfast)' };
+        }
+
+        function showDemoData() {
+            // Simple demo data for testing
+            const demoRooms = [];
+            for (let floor = 1; floor <= 3; floor++) {
+                for (let room = 1; room <= 10; room++) {
+                    const roomNumber = `${floor}${room.toString().padStart(2, '0')}`;
+                    const hasGuest = Math.random() > 0.5;
+                    const hasBreakfast = hasGuest && Math.random() > 0.4;
+                    const consumed = hasBreakfast && Math.random() > 0.6;
+                    
+                    demoRooms.push({
+                        room_number: roomNumber,
+                        floor: floor,
+                        has_guest: hasGuest,
+                        breakfast_package: hasBreakfast,
+                        consumed_today: consumed
+                    });
+                }
+            }
+            renderRooms(demoRooms);
+        }
+
+        // Start the application
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Page loaded, testing API...');
+            testAPI();
+        });
+    </script>
+</body>
+</html>

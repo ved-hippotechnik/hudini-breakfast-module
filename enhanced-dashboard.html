@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Hotel breakfast package management system">
+    <meta name="theme-color" content="#667eea">
+    <title>Hotel Room Grid Dashboard - Enhanced</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: white;
+            min-height: 100vh;
+            color: #333;
+            transition: all 0.3s ease;
+        }
+
+        body.dark-mode {
+            background: linear-gradient(135deg, #1a1d2e 0%, #2d3748 100%);
+            color: #e2e8f0;
+        }
+
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            color: #333;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            text-align: center;
+            border: 2px solid #e2e8f0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        body.dark-mode .header {
+            background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+            color: #e2e8f0;
+            border-color: #4a5568;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: #667eea;
+            border: 2px solid #667eea;
+            color: white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 20px;
+        }
+
+        body.dark-mode .theme-toggle {
+            background: #4a5568;
+            border-color: #4a5568;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .navigation {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-button {
+            background: white;
+            border: 2px solid #667eea;
+            color: #667eea;
+            padding: 10px 15px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        body.dark-mode .nav-button {
+            background: #2d3748;
+            border-color: #4a5568;
+            color: #e2e8f0;
+        }
+
+        .nav-button:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        body.dark-mode .nav-button:hover {
+            background: #4a5568;
+            color: #e2e8f0;
+        }
+
+        .nav-button.active {
+            background: #667eea;
+            color: white;
+        }
+
+        body.dark-mode .nav-button.active {
+            background: #4a5568;
+            color: #e2e8f0;
+        }
+
+        .connection-status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            border-radius: 25px;
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 1000;
+        }
+
+        .connection-status.connected {
+            background: #28a745;
+            color: white;
+        }
+
+        .connection-status.disconnected {
+            background: #dc3545;
+            color: white;
+        }
+
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        body.dark-mode .stat-card {
+            background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+            color: #e2e8f0;
+            border: 1px solid #4a5568;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        body.dark-mode .stat-label {
+            color: #a0aec0;
+        }
+
+        .controls-section {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        body.dark-mode .controls-section {
+            background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+            border: 1px solid #4a5568;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr auto;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .search-input, .filter-select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        body.dark-mode .search-input,
+        body.dark-mode .filter-select {
+            background: #1a1d2e;
+            border-color: #4a5568;
+            color: #e2e8f0;
+        }
+
+        body.dark-mode .search-input::placeholder {
+            color: #a0aec0;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            color: white;
+        }
+
+        .btn-primary { background: #007bff; }
+        .btn-success { background: #28a745; }
+        .btn-secondary { background: #6c757d; }
+
+        body.dark-mode .btn-primary { background: #4299e1; }
+        body.dark-mode .btn-success { background: #38a169; }
+        body.dark-mode .btn-secondary { background: #4a5568; }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .rooms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .room-card {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 12px;
+            padding: 15px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        body.dark-mode .room-card {
+            background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+            border-color: #4a5568;
+            color: #e2e8f0;
+        }
+
+        .room-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .room-number {
+            font-size: 1.1em;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .room-status {
+            font-size: 0.75em;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .guest-name {
+            font-size: 0.7em;
+            color: #666;
+            margin-top: auto;
+        }
+
+        body.dark-mode .guest-name {
+            color: #a0aec0;
+        }
+
+        /* Room Status Colors */
+        .room-vacant {
+            background: #e8f5e8;
+            border-color: #28a745;
+            color: #155724;
+        }
+
+        .room-occupied {
+            background: #fff3cd;
+            border-color: #ffc107;
+            color: #856404;
+        }
+
+        .room-occupied-breakfast {
+            background: #cce7ff;
+            border-color: #007bff;
+            color: #004085;
+        }
+
+        .room-consumed {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+
+        .room-maintenance {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+
+        /* Dark Mode Room Status Colors */
+        body.dark-mode .room-vacant {
+            background: linear-gradient(135deg, #1a2e1a 0%, #2d4a2d 100%);
+            border-color: #38a169;
+            color: #9ae6b4;
+        }
+
+        body.dark-mode .room-occupied {
+            background: linear-gradient(135deg, #2d2a1f 0%, #4a4032 100%);
+            border-color: #d69e2e;
+            color: #faf089;
+        }
+
+        body.dark-mode .room-occupied-breakfast {
+            background: linear-gradient(135deg, #1a2332 0%, #2d3748 100%);
+            border-color: #4299e1;
+            color: #90cdf4;
+        }
+
+        body.dark-mode .room-consumed {
+            background: linear-gradient(135deg, #1a2e1a 0%, #2d4a2d 100%);
+            border-color: #38a169;
+            color: #9ae6b4;
+        }
+
+        body.dark-mode .room-maintenance {
+            background: linear-gradient(135deg, #2d1b1f 0%, #4a2c35 100%);
+            border-color: #e53e3e;
+            color: #feb2b2;
+        }
+
+        /* VIP and Special Guest Styling */
+        .room-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .room-indicators {
+            display: flex;
+            gap: 5px;
+            font-size: 16px;
+        }
+
+        .vip-room {
+            border-color: #ffd700 !important;
+            border-width: 3px;
+            background: linear-gradient(135deg, #fffdf7 0%, #fff9e6 100%) !important;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+        }
+
+        .upset-room {
+            border-color: #ff6347 !important;
+            border-width: 3px;
+            animation: pulse-border 2s infinite;
+        }
+
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 0 0 rgba(255, 99, 71, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 99, 71, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 99, 71, 0); }
+        }
+
+        .vip-indicator, .upset-indicator, .special-req-indicator {
+            cursor: help;
+        }
+
+        body.dark-mode .vip-room {
+            background: linear-gradient(135deg, #2d2a1f 0%, #4a4032 100%) !important;
+            border-color: #d69e2e !important;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.7);
+            padding-top: 60px;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        body.dark-mode .modal-content {
+            background-color: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+            border-color: #4a5568;
+            color: #e2e8f0;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .modal-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #333;
+        }
+
+        body.dark-mode .modal-title {
+            color: #e2e8f0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            font-weight: bold;
+            color: #999;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .modal-close:hover {
+            color: #333;
+            background: #f0f0f0;
+        }
+
+        body.dark-mode .modal-close {
+            color: #a0aec0;
+        }
+
+        body.dark-mode .modal-close:hover {
+            color: #e2e8f0;
+            background: #1a1d2e;
+        }
+
+        .modal-body {
+            margin-bottom: 15px;
+        }
+
+        .modal-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .modal-info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+        }
+
+        body.dark-mode .modal-info-item {
+            background: #1a1d2e;
+            border-color: #4a5568;
+        }
+
+        .modal-label {
+            font-weight: 500;
+            color: #666;
+        }
+
+        body.dark-mode .modal-label {
+            color: #a0aec0;
+        }
+
+        .modal-value {
+            font-weight: 700;
+            color: #333;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .controls-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .rooms-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+                gap: 8px;
+            }
+
+            .modal-info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <div class="navigation">
+        <a href="analytics-dashboard.html" class="nav-button">📊 Analytics</a>
+        <a href="enhanced-dashboard.html" class="nav-button active">🏨 Enhanced Dashboard</a>
+        <a href="http://localhost:8080/health" class="nav-button" target="_blank" rel="noopener">🔍 API Status</a>
+    </div>
+
+    <!-- Theme Toggle Button -->
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme">
+        🌙
+    </button>
+
+    <!-- Connection Status -->
+    <div class="connection-status disconnected" id="connectionStatus">
+        🔴 Disconnected
+    </div>
+
+    <div class="dashboard-container">
+        <div class="header">
+            <h1>🏨 Hotel Room Grid Dashboard</h1>
+            <p>Real-time breakfast package management - Today's Status</p>
+        </div>
+
+        <!-- Statistics Overview -->
+        <div class="stats-overview">
+            <div class="stat-card">
+                <div class="stat-number" id="totalRooms">0</div>
+                <div class="stat-label">Total Rooms</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="occupiedRooms">0</div>
+                <div class="stat-label">Occupied</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="breakfastPackages">0</div>
+                <div class="stat-label">Breakfast Packages</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="consumedToday">0</div>
+                <div class="stat-label">Consumed Today</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="pendingConsumption">0</div>
+                <div class="stat-label">Pending</div>
+            </div>
+        </div>
+
+        <!-- Controls Section -->
+        <div class="controls-section">
+            <div class="controls-grid">
+                <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search rooms or guests...">
+                
+                <select id="floorFilter" class="filter-select">
+                    <option value="">All Floors</option>
+                    <option value="1">Floor 1</option>
+                    <option value="2">Floor 2</option>
+                    <option value="3">Floor 3</option>
+                </select>
+                
+                <select id="statusFilter" class="filter-select">
+                    <option value="">All Status</option>
+                    <option value="vacant">Vacant</option>
+                    <option value="occupied">Occupied</option>
+                    <option value="with-breakfast">With Breakfast</option>
+                    <option value="consumed">Consumed</option>
+                </select>
+                
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="refreshData()" class="btn btn-primary">🔄 Refresh</button>
+                    <button onclick="exportData()" class="btn btn-success">📊 Export</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loadingIndicator" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>Loading room data...</p>
+        </div>
+
+        <!-- Room Grid -->
+        <div id="roomGrid"></div>
+    </div>
+
+    <!-- Room Details Modal -->
+    <div id="roomModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalRoomNumber">Room 101</h2>
+                <button class="modal-close" onclick="closeRoomModal()" aria-label="Close modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-info-grid">
+                    <div class="modal-info-item">
+                        <span class="modal-label">Status:</span>
+                        <span id="modalStatus" class="modal-value">Occupied</span>
+                    </div>
+                    <div class="modal-info-item">
+                        <span class="modal-label">Floor:</span>
+                        <span id="modalFloor" class="modal-value">1</span>
+                    </div>
+                    <div class="modal-info-item">
+                        <span class="modal-label">Room Type:</span>
+                        <span id="modalRoomType" class="modal-value">Standard</span>
+                    </div>
+                    <div class="modal-info-item">
+                        <span class="modal-label">Guest Name:</span>
+                        <span id="modalGuestName" class="modal-value">John Smith</span>
+                    </div>
+                    <div class="modal-info-item">
+                        <span class="modal-label">Breakfast Package:</span>
+                        <span id="modalBreakfastPackage" class="modal-value">Yes</span>
+                    </div>
+                    <div class="modal-info-item">
+                        <span class="modal-label">Consumed Today:</span>
+                        <span id="modalConsumedToday" class="modal-value">No</span>
+                    </div>
+                    <div class="modal-info-item">
+                        <span class="modal-label">Check-in Date:</span>
+                        <span id="modalCheckinDate" class="modal-value">2025-07-17</span>
+                    </div>
+                    <div class="modal-info-item">
+                        <span class="modal-label">Check-out Date:</span>
+                        <span id="modalCheckoutDate" class="modal-value">2025-07-19</span>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button id="toggleBreakfastBtn" class="btn btn-primary" onclick="toggleBreakfast()">
+                        Toggle Breakfast
+                    </button>
+                    <button id="markConsumedBtn" class="btn btn-success" onclick="markConsumed()">
+                        Mark Consumed
+                    </button>
+                    <button class="btn btn-secondary" onclick="closeRoomModal()">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentRoomData = [];
+        let filteredRoomData = [];
+        let websocket = null;
+        let reconnectAttempts = 0;
+        const maxReconnectAttempts = 5;
+        
+        const API_BASE_URL = 'http://localhost:8080/api/demo';
+        const WS_URL = 'ws://localhost:8080/ws';
+        const PROPERTY_ID = 'HOTEL001';
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Enhanced Dashboard loading...');
+            
+            // Initialize theme
+            initializeTheme();
+            
+            // Initialize WebSocket
+            initializeWebSocket();
+            
+            // Load data
+            refreshData();
+            
+            // Event listeners
+            document.getElementById('searchInput').addEventListener('input', applyFilters);
+            document.getElementById('floorFilter').addEventListener('change', applyFilters);
+            document.getElementById('statusFilter').addEventListener('change', applyFilters);
+        });
+
+        // Theme management
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('hudini-theme') || 'light';
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+                document.querySelector('.theme-toggle').innerHTML = '☀️';
+            }
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            const themeToggle = document.querySelector('.theme-toggle');
+            
+            if (body.classList.contains('dark-mode')) {
+                body.classList.remove('dark-mode');
+                themeToggle.innerHTML = '🌙';
+                localStorage.setItem('hudini-theme', 'light');
+                showToast('Light mode activated', 'info');
+            } else {
+                body.classList.add('dark-mode');
+                themeToggle.innerHTML = '☀️';
+                localStorage.setItem('hudini-theme', 'dark');
+                showToast('Dark mode activated', 'info');
+            }
+        }
+
+        // WebSocket management
+        function initializeWebSocket() {
+            connectWebSocket();
+        }
+
+        function connectWebSocket() {
+            try {
+                websocket = new WebSocket(WS_URL);
+                updateConnectionStatus('connecting');
+                
+                websocket.onopen = function(event) {
+                    console.log('WebSocket connected');
+                    updateConnectionStatus('connected');
+                    reconnectAttempts = 0;
+                    showToast('Real-time updates connected', 'success');
+                };
+                
+                websocket.onmessage = function(event) {
+                    try {
+                        const data = JSON.parse(event.data);
+                        handleWebSocketMessage(data);
+                    } catch (error) {
+                        console.error('Error parsing WebSocket message:', error);
+                    }
+                };
+                
+                websocket.onclose = function(event) {
+                    console.log('WebSocket connection closed');
+                    updateConnectionStatus('disconnected');
+                    
+                    if (reconnectAttempts < maxReconnectAttempts) {
+                        reconnectAttempts++;
+                        setTimeout(connectWebSocket, 2000 * reconnectAttempts);
+                        showToast(`Reconnecting... (${reconnectAttempts}/${maxReconnectAttempts})`, 'warning');
+                    }
+                };
+                
+                websocket.onerror = function(error) {
+                    console.error('WebSocket error:', error);
+                    updateConnectionStatus('disconnected');
+                };
+            } catch (error) {
+                console.error('Failed to create WebSocket connection:', error);
+                updateConnectionStatus('disconnected');
+                showToast('WebSocket connection failed - using demo data', 'warning');
+            }
+        }
+
+        function handleWebSocketMessage(data) {
+            console.log('WebSocket message received:', data);
+            showToast(`Real-time update: ${data.type}`, 'info');
+            
+            // Refresh data when we get updates
+            setTimeout(refreshData, 500);
+        }
+
+        function updateConnectionStatus(status) {
+            const statusElement = document.getElementById('connectionStatus');
+            statusElement.className = `connection-status ${status}`;
+            
+            switch (status) {
+                case 'connected':
+                    statusElement.innerHTML = '🟢 Connected';
+                    break;
+                case 'connecting':
+                    statusElement.innerHTML = '🟡 Connecting...';
+                    break;
+                case 'disconnected':
+                    statusElement.innerHTML = '🔴 Disconnected';
+                    break;
+            }
+        }
+
+        // Data management
+        async function refreshData() {
+            showLoading();
+            
+            try {
+                // Try to fetch from API first
+                const response = await fetch(`${API_BASE_URL}/rooms/breakfast-status?property_id=${PROPERTY_ID}`);
+                
+                if (response.ok) {
+                    const apiData = await response.json();
+                    currentRoomData = transformAPIData(apiData);
+                    showToast('Live data loaded', 'success');
+                } else {
+                    throw new Error('API not available');
+                }
+            } catch (error) {
+                console.log('API not available, using demo data');
+                currentRoomData = generateDemoData();
+                showToast('Using demo data', 'warning');
+            }
+            
+            applyFilters();
+            updateStats();
+            hideLoading();
+        }
+
+        function generateDemoData() {
+            const rooms = [];
+            const guestNames = ['John Smith', 'Jane Doe', 'Bob Johnson', 'Alice Brown', 'Charlie Wilson', 'Diana Davis'];
+            
+            for (let floor = 1; floor <= 3; floor++) {
+                for (let room = 1; room <= 20; room++) {
+                    const roomNumber = floor * 100 + room;
+                    const hasGuest = Math.random() > 0.3;
+                    const hasBreakfast = hasGuest && Math.random() > 0.4;
+                    const isConsumed = hasBreakfast && Math.random() > 0.6;
+                    
+                    rooms.push({
+                        room_number: roomNumber.toString(),
+                        floor: floor,
+                        room_type: 'Standard',
+                        status: hasGuest ? 'occupied' : 'vacant',
+                        has_guest: hasGuest,
+                        guest_name: hasGuest ? guestNames[Math.floor(Math.random() * guestNames.length)] : '',
+                        breakfast_package: hasBreakfast,
+                        consumed_today: isConsumed,
+                        check_in_date: hasGuest ? new Date().toISOString() : null,
+                        check_out_date: hasGuest ? new Date(Date.now() + 86400000 * 2).toISOString() : null
+                    });
+                }
+            }
+            
+            return rooms;
+        }
+
+        function transformAPIData(apiData) {
+            // Transform API response to match our format
+            return apiData.map(room => ({
+                room_number: room.room_number,
+                floor: room.floor || 1,
+                room_type: room.room_type || 'Standard',
+                status: room.status || 'available',
+                has_guest: room.has_guest || false,
+                guest_name: room.guest_name || '',
+                breakfast_package: room.breakfast_package || false,
+                consumed_today: room.consumed_today || false,
+                check_in_date: room.check_in_date,
+                check_out_date: room.check_out_date
+            }));
+        }
+
+        function applyFilters() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const floorFilter = document.getElementById('floorFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            
+            filteredRoomData = currentRoomData.filter(room => {
+                const matchesSearch = !searchTerm || 
+                    room.room_number.toLowerCase().includes(searchTerm) ||
+                    (room.guest_name && room.guest_name.toLowerCase().includes(searchTerm));
+                
+                const matchesFloor = !floorFilter || room.floor.toString() === floorFilter;
+                
+                const matchesStatus = !statusFilter || 
+                    (statusFilter === 'vacant' && !room.has_guest) ||
+                    (statusFilter === 'occupied' && room.has_guest && !room.breakfast_package) ||
+                    (statusFilter === 'with-breakfast' && room.breakfast_package && !room.consumed_today) ||
+                    (statusFilter === 'consumed' && room.consumed_today);
+                
+                return matchesSearch && matchesFloor && matchesStatus;
+            });
+            
+            renderRoomGrid();
+        }
+
+        function renderRoomGrid() {
+            const roomGrid = document.getElementById('roomGrid');
+            const dataToRender = filteredRoomData.length > 0 ? filteredRoomData : currentRoomData;
+            
+            if (dataToRender.length === 0) {
+                roomGrid.innerHTML = `
+                    <div style="text-align: center; padding: 50px; color: #666;">
+                        <h3>No rooms found</h3>
+                        <p>Try adjusting your search criteria.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Group rooms by floor
+            const roomsByFloor = {};
+            dataToRender.forEach(room => {
+                const floor = room.floor || 1;
+                if (!roomsByFloor[floor]) {
+                    roomsByFloor[floor] = [];
+                }
+                roomsByFloor[floor].push(room);
+            });
+
+            let html = '';
+            Object.keys(roomsByFloor).sort((a, b) => parseInt(b) - parseInt(a)).forEach(floor => {
+                const rooms = roomsByFloor[floor].sort((a, b) => 
+                    a.room_number.localeCompare(b.room_number, undefined, { numeric: true })
+                );
+                
+                html += `
+                    <div style="margin-bottom: 30px;">
+                        <h3 style="margin-bottom: 15px; padding: 10px; background: rgba(102, 126, 234, 0.1); border-radius: 8px;">
+                            🏢 Floor ${floor} (${rooms.length} rooms)
+                        </h3>
+                        <div class="rooms-grid">
+                            ${rooms.map(room => renderRoomCard(room)).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+
+            roomGrid.innerHTML = html;
+        }
+
+        function renderRoomCard(room) {
+            const statusClass = getRoomStatusClass(room);
+            const statusText = getRoomStatusText(room);
+            
+            // Special guest indicators
+            const vipIndicator = room.is_vip ? '<span class="vip-indicator" title="VIP Guest">👑</span>' : '';
+            const upsetIndicator = room.is_upset ? '<span class="upset-indicator" title="Upset Guest - Handle with Care">⚠️</span>' : '';
+            const specialReqIndicator = room.special_requests ? '<span class="special-req-indicator" title="Has Special Requests">📋</span>' : '';
+            
+            return `
+                <div class="room-card ${statusClass} ${room.is_vip ? 'vip-room' : ''} ${room.is_upset ? 'upset-room' : ''}" onclick="showRoomDetails('${room.room_number}')">
+                    <div class="room-header">
+                        <div class="room-number">${room.room_number}</div>
+                        <div class="room-indicators">
+                            ${vipIndicator}
+                            ${upsetIndicator}
+                            ${specialReqIndicator}
+                        </div>
+                    </div>
+                    <div class="room-status">${statusText}</div>
+                    ${room.has_guest ? `<div class="guest-name">${room.guest_name}</div>` : ''}
+                </div>
+            `;
+        }
+
+        function getRoomStatusClass(room) {
+            if (room.status === 'maintenance') return 'room-maintenance';
+            if (!room.has_guest) return 'room-vacant';
+            if (room.consumed_today) return 'room-consumed';
+            if (room.breakfast_package) return 'room-occupied-breakfast';
+            return 'room-occupied';
+        }
+
+        function getRoomStatusText(room) {
+            if (room.status === 'maintenance') return 'Maintenance';
+            if (!room.has_guest) return 'Vacant';
+            if (room.consumed_today) return 'Consumed';
+            if (room.breakfast_package) return 'Breakfast';
+            return 'Occupied';
+        }
+
+        function updateStats() {
+            const totalRooms = currentRoomData.length;
+            const occupiedRooms = currentRoomData.filter(room => room.has_guest).length;
+            const breakfastPackages = currentRoomData.filter(room => room.breakfast_package).length;
+            const consumedToday = currentRoomData.filter(room => room.consumed_today).length;
+            const pendingConsumption = currentRoomData.filter(room => room.breakfast_package && !room.consumed_today).length;
+
+            document.getElementById('totalRooms').textContent = totalRooms;
+            document.getElementById('occupiedRooms').textContent = occupiedRooms;
+            document.getElementById('breakfastPackages').textContent = breakfastPackages;
+            document.getElementById('consumedToday').textContent = consumedToday;
+            document.getElementById('pendingConsumption').textContent = pendingConsumption;
+        }
+
+        // Utility functions
+        function showRoomDetails(roomNumber) {
+            const room = currentRoomData.find(r => r.room_number === roomNumber);
+            if (room) {
+                openRoomModal(room);
+            }
+        }
+
+        function openRoomModal(room) {
+            // Populate modal with room data
+            document.getElementById('modalRoomNumber').textContent = `Room ${room.room_number}`;
+            document.getElementById('modalStatus').textContent = room.has_guest ? 'Occupied' : 'Vacant';
+            document.getElementById('modalFloor').textContent = room.floor || 1;
+            document.getElementById('modalRoomType').textContent = room.room_type || 'Standard';
+            document.getElementById('modalGuestName').textContent = room.guest_name || 'N/A';
+            document.getElementById('modalBreakfastPackage').textContent = room.breakfast_package ? 'Yes' : 'No';
+            document.getElementById('modalConsumedToday').textContent = room.consumed_today ? 'Yes' : 'No';
+            document.getElementById('modalCheckinDate').textContent = room.check_in_date ? new Date(room.check_in_date).toLocaleDateString() : 'N/A';
+            document.getElementById('modalCheckoutDate').textContent = room.check_out_date ? new Date(room.check_out_date).toLocaleDateString() : 'N/A';
+            
+            // Update action buttons based on room status
+            const toggleBreakfastBtn = document.getElementById('toggleBreakfastBtn');
+            const markConsumedBtn = document.getElementById('markConsumedBtn');
+            
+            if (!room.has_guest) {
+                toggleBreakfastBtn.style.display = 'none';
+                markConsumedBtn.style.display = 'none';
+            } else {
+                toggleBreakfastBtn.style.display = 'inline-block';
+                toggleBreakfastBtn.textContent = room.breakfast_package ? 'Remove Breakfast' : 'Add Breakfast';
+                
+                if (room.breakfast_package && !room.consumed_today) {
+                    markConsumedBtn.style.display = 'inline-block';
+                    markConsumedBtn.textContent = 'Mark Consumed';
+                } else if (room.consumed_today) {
+                    markConsumedBtn.style.display = 'inline-block';
+                    markConsumedBtn.textContent = 'Mark Unconsumed';
+                } else {
+                    markConsumedBtn.style.display = 'none';
+                }
+            }
+            
+            // Store current room for actions
+            window.currentModalRoom = room;
+            
+            // Show modal
+            document.getElementById('roomModal').style.display = 'block';
+        }
+
+        function closeRoomModal() {
+            document.getElementById('roomModal').style.display = 'none';
+            window.currentModalRoom = null;
+        }
+
+        function toggleBreakfast() {
+            if (!window.currentModalRoom) return;
+            
+            const room = window.currentModalRoom;
+            room.breakfast_package = !room.breakfast_package;
+            
+            // If removing breakfast, also remove consumed status
+            if (!room.breakfast_package) {
+                room.consumed_today = false;
+            }
+            
+            showToast(`Breakfast package ${room.breakfast_package ? 'added' : 'removed'} for Room ${room.room_number}`, 'success');
+            
+            // Update modal display
+            openRoomModal(room);
+            
+            // Update the grid
+            applyFilters();
+            updateStats();
+        }
+
+        function markConsumed() {
+            if (!window.currentModalRoom) return;
+            
+            const room = window.currentModalRoom;
+            if (room.breakfast_package) {
+                room.consumed_today = !room.consumed_today;
+                showToast(`Room ${room.room_number} breakfast ${room.consumed_today ? 'marked as consumed' : 'marked as unconsumed'}`, 'success');
+                
+                // Update modal display
+                openRoomModal(room);
+                
+                // Update the grid
+                applyFilters();
+                updateStats();
+            }
+        }
+
+        function exportData() {
+            const dataToExport = filteredRoomData.length > 0 ? filteredRoomData : currentRoomData;
+            const headers = ['Room Number', 'Floor', 'Status', 'Guest Name', 'Breakfast Package', 'Consumed Today'];
+            const csvContent = [
+                headers.join(','),
+                ...dataToExport.map(room => [
+                    room.room_number,
+                    room.floor,
+                    room.has_guest ? 'Occupied' : 'Vacant',
+                    `"${room.guest_name || ''}"`,
+                    room.breakfast_package ? 'Yes' : 'No',
+                    room.consumed_today ? 'Yes' : 'No'
+                ].join(','))
+            ].join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `room-status-${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            showToast(`Exported ${dataToExport.length} rooms to CSV`, 'success');
+        }
+
+        function showLoading() {
+            document.getElementById('loadingIndicator').style.display = 'block';
+            document.getElementById('roomGrid').style.opacity = '0.5';
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingIndicator').style.display = 'none';
+            document.getElementById('roomGrid').style.opacity = '1';
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.textContent = message;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // Network status monitoring
+        window.addEventListener('online', () => {
+            showToast('Connection restored', 'success');
+            connectWebSocket();
+            refreshData();
+        });
+
+        window.addEventListener('offline', () => {
+            showToast('Working offline', 'warning');
+            updateConnectionStatus('disconnected');
+        });
+
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            if (navigator.onLine && websocket && websocket.readyState === WebSocket.OPEN) {
+                refreshData();
+            }
+        }, 30000);
+
+        // Modal event listeners
+        window.addEventListener('click', (event) => {
+            const modal = document.getElementById('roomModal');
+            if (event.target === modal) {
+                closeRoomModal();
+            }
+        });
+
+        // Keyboard event listeners
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                closeRoomModal();
+            }
+        });
+    </script>
+</body>
+</html>

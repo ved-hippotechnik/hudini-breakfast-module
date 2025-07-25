@@ -14,122 +14,54 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: white;
-            min-height: 100vh;
-            color: #333;
+            background: #f8fafc;
+            color: #334155;
             transition: all 0.3s ease;
         }
 
         body.dark-mode {
-            background: linear-gradient(135deg, #1a1d2e 0%, #2d3748 100%);
+            background: #1e293b;
             color: #e2e8f0;
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
         }
 
         .header {
-            background: white;
-            color: #333;
-            padding: 25px;
-            border-radius: 15px;
-            margin-bottom: 25px;
             text-align: center;
-            border: 2px solid #e2e8f0;
+            margin-bottom: 30px;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
         body.dark-mode .header {
-            background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+            background: #2d3748;
             color: #e2e8f0;
-            border-color: #4a5568;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-        }
-
-        .header h1 {
-            font-size: 2.2em;
-            margin-bottom: 10px;
         }
 
         .theme-toggle {
             position: fixed;
             top: 20px;
             right: 20px;
-            z-index: 1000;
-            background: #667eea;
-            border: 2px solid #667eea;
+            background: #3b82f6;
             color: white;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
             cursor: pointer;
+            font-size: 16px;
+            z-index: 1000;
             transition: all 0.3s ease;
-            font-size: 20px;
-        }
-
-        body.dark-mode .theme-toggle {
-            background: #4a5568;
-            border-color: #4a5568;
         }
 
         .theme-toggle:hover {
-            transform: scale(1.1);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
-
-        .navigation {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 1000;
-            display: flex;
-            gap: 10px;
-        }
-
-        .nav-button {
-            background: white;
-            border: 2px solid #667eea;
-            color: #667eea;
-            padding: 10px 15px;
-            border-radius: 25px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 14px;
-            font-weight: 600;
-            text-decoration: none;
-        }
-
-        body.dark-mode .nav-button {
-            background: #2d3748;
-            border-color: #4a5568;
-            color: #e2e8f0;
-        }
-
-        .nav-button:hover {
-            background: #667eea;
-            color: white;
-            transform: translateY(-2px);
-        }
-
-        body.dark-mode .nav-button:hover {
-            background: #4a5568;
-            color: #e2e8f0;
-        }
-
-        .nav-button.active {
-            background: #667eea;
-            color: white;
-        }
-
-        body.dark-mode .nav-button.active {
-            background: #4a5568;
-            color: #e2e8f0;
+            background: #2563eb;
+            transform: scale(1.05);
         }
 
         .metrics-grid {
@@ -336,15 +268,7 @@
     </style>
 </head>
 <body>
-    <!-- Navigation -->
-    <div class="navigation">
-        <a href="analytics-dashboard.html" class="nav-button active">📊 Analytics</a>
-        <a href="enhanced-dashboard.html" class="nav-button">🏨 Enhanced Dashboard</a>
-        <a href="http://localhost:8080/health" class="nav-button" target="_blank" rel="noopener">🔍 API Status</a>
-    </div>
-
-    <!-- Theme Toggle Button -->
-    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme">🌙</button>
+    <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
     
     <div class="container">
         <div class="header">
@@ -415,18 +339,6 @@
                 <div class="metric-title">Active Breakfasts</div>
                 <div class="metric-value" id="active">0</div>
                 <div class="metric-change" id="activeChange">+0%</div>
-            </div>
-            
-            <div class="metric-card" style="border: 2px solid #ffd700;">
-                <div class="metric-title">👑 VIP Guests</div>
-                <div class="metric-value" id="vipCount">0</div>
-                <div class="metric-change" id="vipChange">Service Excellence</div>
-            </div>
-            
-            <div class="metric-card" style="border: 2px solid #ff6347;">
-                <div class="metric-title">⚠️ Attention Required</div>
-                <div class="metric-value" id="upsetCount">0</div>
-                <div class="metric-change" id="upsetChange">Handle with Care</div>
             </div>
         </div>
 
@@ -669,23 +581,12 @@
         // Update analytics data
         async function updateAnalytics() {
             try {
-                // Fetch both analytics and room data for VIP metrics
-                const [analyticsResponse, roomsResponse] = await Promise.all([
-                    fetch('/api/demo/analytics/advanced'),
-                    fetch('/api/demo/rooms/breakfast-status?property_id=PROP001')
-                ]);
+                const response = await fetch('/api/demo/analytics/advanced');
+                const result = await response.json();
                 
-                const analyticsResult = await analyticsResponse.json();
-                const roomsResult = await roomsResponse.json();
-                
-                if (analyticsResult.success) {
-                    // Add rooms data to analytics data for VIP metrics
-                    if (roomsResult.data && roomsResult.data.rooms) {
-                        analyticsResult.data.rooms = roomsResult.data.rooms;
-                    }
-                    
-                    updateMetrics(analyticsResult.data);
-                    updateChartData(analyticsResult.data);
+                if (result.success) {
+                    updateMetrics(result.data);
+                    updateChartData(result.data);
                     updateConnectionStatus(true);
                 } else {
                     throw new Error('Failed to fetch analytics data');
@@ -694,41 +595,14 @@
                 console.error('Error fetching analytics:', error);
                 updateConnectionStatus(false);
                 // Use mock data as fallback
-                const mockData = getMockData();
-                // Add sample VIP data to mock
-                mockData.rooms = [
-                    { room_number: '101', is_vip: true, is_upset: false },
-                    { room_number: '102', is_vip: false, is_upset: true },
-                    { room_number: '203', is_vip: true, is_upset: false }
-                ];
-                updateMetrics(mockData);
-                updateChartData(mockData);
+                updateMetrics(getMockData());
+                updateChartData(getMockData());
             }
         }
 
         // Update metrics cards
         function updateMetrics(data) {
             const metrics = data.metrics;
-            
-            // Calculate VIP metrics from room data if available
-            if (data.rooms) {
-                const vipGuests = data.rooms.filter(r => r.is_vip).length;
-                const upsetGuests = data.rooms.filter(r => r.is_upset).length;
-                
-                document.getElementById('vipCount').textContent = vipGuests.toString();
-                document.getElementById('upsetCount').textContent = upsetGuests.toString();
-                
-                // Update VIP status text
-                if (vipGuests > 0) {
-                    document.getElementById('vipChange').textContent = `${vipGuests} VIP${vipGuests > 1 ? 's' : ''} active`;
-                    document.getElementById('vipChange').className = 'metric-change positive';
-                }
-                
-                if (upsetGuests > 0) {
-                    document.getElementById('upsetChange').textContent = `Immediate attention`;
-                    document.getElementById('upsetChange').className = 'metric-change negative';
-                }
-            }
             
             document.getElementById('revenue').textContent = '$' + metrics.revenue.current.toLocaleString();
             document.getElementById('revenueChange').textContent = 
