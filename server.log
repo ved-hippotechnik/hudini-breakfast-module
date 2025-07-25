@@ -1,0 +1,45 @@
+[GIN-debug] [WARNING] Creating an Engine instance with the Logger and Recovery middleware already attached.
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] POST   /api/auth/register        --> hudini-breakfast-module/internal/api.(*AuthHandler).Register-fm (4 handlers)
+[GIN-debug] POST   /api/auth/login           --> hudini-breakfast-module/internal/api.(*AuthHandler).Login-fm (4 handlers)
+[GIN-debug] GET    /api/demo/rooms/breakfast-status --> hudini-breakfast-module/internal/api.(*BreakfastHandler).GetRoomBreakfastStatus-fm (4 handlers)
+[GIN-debug] GET    /api/demo/analytics/advanced --> hudini-breakfast-module/internal/api.(*BreakfastHandler).GetAdvancedAnalytics-fm (4 handlers)
+[GIN-debug] GET    /api/demo/analytics/realtime --> hudini-breakfast-module/internal/api.(*BreakfastHandler).GetRealtimeMetrics-fm (4 handlers)
+[GIN-debug] GET    /api/auth/me              --> hudini-breakfast-module/internal/api.(*AuthHandler).GetProfile-fm (5 handlers)
+[GIN-debug] GET    /api/rooms/breakfast-status --> hudini-breakfast-module/internal/api.(*BreakfastHandler).GetRoomBreakfastStatus-fm (5 handlers)
+[GIN-debug] GET    /api/consumption/history  --> hudini-breakfast-module/internal/api.(*BreakfastHandler).GetConsumptionHistory-fm (5 handlers)
+[GIN-debug] GET    /api/reports/daily        --> hudini-breakfast-module/internal/api.(*BreakfastHandler).GetDailyReport-fm (5 handlers)
+[GIN-debug] GET    /api/analytics            --> hudini-breakfast-module/internal/api.(*BreakfastHandler).GetAnalytics-fm (5 handlers)
+[GIN-debug] GET    /api/analytics/advanced   --> hudini-breakfast-module/internal/api.(*BreakfastHandler).GetAdvancedAnalytics-fm (5 handlers)
+[GIN-debug] GET    /api/analytics/realtime   --> hudini-breakfast-module/internal/api.(*BreakfastHandler).GetRealtimeMetrics-fm (5 handlers)
+[GIN-debug] GET    /api/analytics/predictive --> hudini-breakfast-module/internal/api.(*BreakfastHandler).GetPredictiveInsights-fm (5 handlers)
+[GIN-debug] GET    /api/analytics/business-intelligence --> hudini-breakfast-module/internal/api.(*BreakfastHandler).GetBusinessIntelligence-fm (5 handlers)
+[GIN-debug] GET    /api/guests               --> hudini-breakfast-module/internal/api.(*GuestHandler).GetGuests-fm (5 handlers)
+[GIN-debug] POST   /api/guests               --> hudini-breakfast-module/internal/api.(*GuestHandler).CreateGuest-fm (5 handlers)
+[GIN-debug] PUT    /api/guests/:id           --> hudini-breakfast-module/internal/api.(*GuestHandler).UpdateGuest-fm (5 handlers)
+[GIN-debug] POST   /api/rooms/:room_number/consume --> hudini-breakfast-module/internal/api.(*BreakfastHandler).MarkBreakfastConsumed-fm (6 handlers)
+[GIN-debug] GET    /ws                       --> hudini-breakfast-module/internal/api.SetupRoutes.func1 (4 handlers)
+[GIN-debug] GET    /health                   --> hudini-breakfast-module/internal/api.HealthCheck (4 handlers)
+2025/07/25 08:13:51 Server starting on port 8080
+[GIN-debug] [WARNING] You trusted all proxies, this is NOT safe. We recommend you to set a value.
+Please check https://pkg.go.dev/github.com/gin-gonic/gin#readme-don-t-trust-all-proxies for details.
+[GIN-debug] Listening and serving HTTP on :8080
+[GIN] 2025/07/25 - 08:15:03 | 403 |       4.625µs |             ::1 | GET      "/api/demo/rooms/breakfast-status?property_id=HOTEL001"
+[GIN] 2025/07/25 - 08:15:03 | 403 |       2.292µs |             ::1 | GET      "/ws"
+[GIN] 2025/07/25 - 08:15:05 | 403 |       2.167µs |             ::1 | GET      "/ws"
+[GIN] 2025/07/25 - 08:15:09 | 403 |       5.334µs |             ::1 | GET      "/ws"
+[GIN] 2025/07/25 - 08:15:15 | 403 |       4.708µs |             ::1 | GET      "/ws"
+[GIN] 2025/07/25 - 08:15:23 | 403 |       4.208µs |             ::1 | GET      "/ws"
+[GIN] 2025/07/25 - 08:15:33 | 403 |       1.917µs |             ::1 | GET      "/ws"
+[GIN] 2025/07/25 - 08:19:55 | 403 |     226.875µs |             ::1 | GET      "/api/demo/rooms/breakfast-status?property_id=HOTEL001"
+[GIN] 2025/07/25 - 08:19:55 | 403 |     238.791µs |             ::1 | GET      "/ws"
+[GIN] 2025/07/25 - 08:19:57 | 403 |       4.292µs |             ::1 | GET      "/ws"
+[GIN] 2025/07/25 - 08:20:01 | 403 |       2.084µs |             ::1 | GET      "/ws"
+[GIN] 2025/07/25 - 08:20:07 | 403 |       4.167µs |             ::1 | GET      "/ws"
+[GIN] 2025/07/25 - 08:20:15 | 403 |           4µs |             ::1 | GET      "/ws"
+[GIN] 2025/07/25 - 08:20:25 | 403 |       6.834µs |             ::1 | GET      "/ws"
+[GIN] 2025/07/25 - 08:48:41 | 404 |     241.167µs |             ::1 | GET      "/favicon.ico"
